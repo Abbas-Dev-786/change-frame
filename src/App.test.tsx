@@ -36,7 +36,7 @@ it("materializes options and creates a keyboard coordinate constraint", () => {
   expect(screen.getByText("Constraint added")).toBeVisible()
 })
 
-it("keeps approval human-only after the decision is prepared", () => {
+it("keeps approval human-only and renders the final draft change order", () => {
   render(<App />)
 
   fireEvent.click(screen.getByRole("button", { name: /evaluate options/i }))
@@ -49,4 +49,12 @@ it("keeps approval human-only after the decision is prepared", () => {
   expect(screen.getByText("Ready for approval")).toBeVisible()
   expect(screen.getByRole("button", { name: /approve decision/i })).toBeEnabled()
   expect(screen.getByText("DEC-019 is ready for human approval.")).toBeVisible()
+
+  fireEvent.click(screen.getByRole("button", { name: /approve decision/i }))
+  fireEvent.click(screen.getByRole("button", { name: /draft change order/i }))
+
+  expect(screen.getAllByText("Change order drafted")[0]).toBeVisible()
+  expect(screen.getAllByText("CO-007")[0]).toBeVisible()
+  expect(screen.getAllByText("+$6,500")[0]).toBeVisible()
+  expect(screen.getByText("MEP-04 — Summit Mechanical")).toBeVisible()
 })

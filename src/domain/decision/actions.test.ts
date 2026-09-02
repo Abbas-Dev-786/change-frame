@@ -130,7 +130,7 @@ describe("decision state machine", () => {
     expect(optionA && constraint ? routeIntersectsRect(optionA.routeOverlay, constraint.geometry) : true).toBe(false)
   })
 
-  it("simulates impact, prepares a decision, and requires human approval before drafting", () => {
+  it("simulates impact, prepares a decision, and drafts one duplicate-safe change order after human approval", () => {
     const evaluated = requireSuccess(
       evaluateResolutionOptions(createInitialDecisionState(), {
         expectedStateVersion: 1,
@@ -190,6 +190,39 @@ describe("decision state machine", () => {
 
     expect(approved.phase).toBe("APPROVED")
     expect(approved.decision?.approvedAt).toBe("2026-09-02T10:10:00.000Z")
+
+    const drafted = requireSuccess(
+      draftChangeOrder(approved, {
+        expectedStateVersion: approved.stateVersion,
+      }),
+    )
+
+    expect(drafted.phase).toBe("CHANGE_ORDER_DRAFTED")
+    expect(drafted.changeOrder?.id).toBe("CO-007")
+    expect(drafted.changeOrder?.decisionId).toBe("DEC-019")
+    expect(drafted.changeOrder?.costImpact).toBe(6500)
+    expect(drafted.changeOrder?.scheduleImpactDays).toBe(0)
+    expect(drafted.activityLog.filter((event) => event.type === "change_order_drafted")).toHaveLength(1)
+
+    const staleDraftReplay = draftChangeOrder(drafted, {
+      expectedStateVersion: approved.stateVersion,
+    })
+
+    expect(staleDraftReplay.success).toBe(false)
+
+    if (!staleDraftReplay.success) {
+      expect(staleDraftReplay.error).toBe("STATE_CONFLICT")
+      expect(staleDraftReplay.state.changeOrder?.id).toBe("CO-007")
+    }
+
+    const duplicateSafeDraft = requireSuccess(
+      draftChangeOrder(drafted, {
+        expectedStateVersion: drafted.stateVersion,
+      }),
+    )
+
+    expect(duplicateSafeDraft.stateVersion).toBe(drafted.stateVersion)
+    expect(duplicateSafeDraft.activityLog.filter((event) => event.type === "change_order_drafted")).toHaveLength(1)
   })
 })
 

@@ -42,3 +42,4 @@ scripts/                                repository quality checks
 - Explicit `any` types are prohibited and checked by `npm run check:no-any`.
 - WebMCP production tools in later phases must call the same domain actions as the UI.
 - Human approval is a domain action exposed only through UI dispatch, never through WebMCP.
+- When the phase-specific WebMCP tool set changes, the registry persists state and refreshes the document so browser-side tool discovery cannot retain stale mutation handles.

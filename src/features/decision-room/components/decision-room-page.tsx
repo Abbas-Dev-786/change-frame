@@ -4,9 +4,11 @@ import { DEFAULT_CONSTRAINT_RECT, getPreviewedOption, type ConstraintDraft, type
 import { useDecisionRoom } from "../hooks/use-decision-room"
 import { useDecisionWebMcp } from "../hooks/use-decision-webmcp"
 import { ActivityTimeline } from "./activity-timeline"
+import { ChangeOrderPanel } from "./change-order-panel"
 import { ConstraintControls } from "./constraint-controls"
 import { DecisionPanel } from "./decision-panel"
 import { DecisionHeader } from "./decision-header"
+import { ErrorAlert } from "./error-alert"
 import { ImpactPanel } from "./impact-panel"
 import { IssuePanel } from "./issue-panel"
 import { OptionsPanel } from "./options-panel"
@@ -53,6 +55,7 @@ export function DecisionRoomPage() {
 
         <section className="grid gap-4 xl:grid-cols-[minmax(620px,1.35fr)_minmax(420px,0.9fr)]">
           <div className="flex flex-col gap-4">
+            <ErrorAlert error={room.lastError} />
             <PlanBoard
               issue={room.activeIssue}
               elements={room.drawingElements}
@@ -100,6 +103,13 @@ export function DecisionRoomPage() {
               onSimulate={() => room.simulateImpact(true)}
               onPrepare={room.prepareDecision}
               onApprove={room.approveDecision}
+            />
+            <ChangeOrderPanel
+              project={room.project}
+              changeOrder={room.changeOrder}
+              decision={room.decision}
+              canDraft={room.phase === "APPROVED"}
+              onDraft={room.draftChangeOrder}
             />
             <ActivityTimeline events={room.activityLog} />
           </div>

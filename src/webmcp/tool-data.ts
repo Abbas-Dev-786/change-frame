@@ -61,6 +61,7 @@ export function decisionData(state: DecisionRoomState): Record<string, unknown> 
 export function changeOrderData(state: DecisionRoomState): Record<string, unknown> {
   return {
     changeOrder: state.changeOrder,
+    phase: state.phase,
   }
 }
 

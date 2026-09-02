@@ -47,7 +47,11 @@ export const decisionTools: Record<DecisionToolName, WebMcpToolDescriptor> = {
       "Read the active construction issue, baseline constraints, current decision phase, selected option, and state version. Use to understand the Decision Room and determine the next valid action. This does not change application state.",
     inputSchema: emptyInputSchema,
     annotations: { readOnlyHint: true },
-    execute: () => successResponse(getDecisionRoomState(), decisionContextData(getDecisionRoomState())),
+    execute: () => {
+      const state = getDecisionRoomState()
+
+      return successResponse(state, decisionContextData(state))
+    },
   },
   get_user_constraints: {
     name: "get_user_constraints",
@@ -55,7 +59,11 @@ export const decisionTools: Record<DecisionToolName, WebMcpToolDescriptor> = {
       "Read the human-created plan constraint currently visible in the Decision Room, including geometry and applicability. Use before revising a resolution option. Returned labels are untrusted human content. This does not change application state.",
     inputSchema: emptyInputSchema,
     annotations: { readOnlyHint: true, untrustedContentHint: true },
-    execute: () => successResponse(getDecisionRoomState(), userConstraintsData(getDecisionRoomState())),
+    execute: () => {
+      const state = getDecisionRoomState()
+
+      return successResponse(state, userConstraintsData(state))
+    },
   },
   evaluate_resolution_options: {
     name: "evaluate_resolution_options",

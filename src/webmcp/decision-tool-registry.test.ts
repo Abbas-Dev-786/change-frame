@@ -135,6 +135,38 @@ describe("decision WebMCP registry", () => {
       "get_user_constraints",
       "draft_change_order",
     ])
+
+    const draftTool = getRegisteredTool("draft_change_order")
+    const draftResult = await draftTool.descriptor.execute({
+      expectedStateVersion: 8,
+    })
+
+    expect(draftResult.success).toBe(true)
+
+    if (draftResult.success) {
+      const changeOrder = readRecord(draftResult.data.changeOrder)
+
+      expect(changeOrder?.id).toBe("CO-007")
+      expect(changeOrder?.status).toBe("draft")
+      expect(draftResult.data.phase).toBe("CHANGE_ORDER_DRAFTED")
+    }
+
+    expect(activeToolNames()).toEqual([
+      "get_decision_context",
+      "get_user_constraints",
+    ])
+    expect(registeredTools.has("approve_decision")).toBe(false)
+
+    const staleDraftReplay = await draftTool.descriptor.execute({
+      expectedStateVersion: 8,
+    })
+
+    expect(staleDraftReplay.success).toBe(false)
+
+    if (!staleDraftReplay.success) {
+      expect(staleDraftReplay.error).toBe("STATE_CONFLICT")
+      expect(useDecisionRoomStore.getState().changeOrder?.id).toBe("CO-007")
+    }
   })
 })
 
@@ -150,4 +182,10 @@ function getRegisteredTool(name: string): RegisteredTool {
   }
 
   return tool
+}
+
+function readRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : null
 }

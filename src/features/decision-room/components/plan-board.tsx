@@ -63,12 +63,19 @@ export function PlanBoard({
     dragStartRef.current = null
     setDraftRect(null)
 
+    releasePointerCapture(event)
+
     if (!rect || rect.width < 24 || rect.height < 24) {
       return
     }
 
-    event.currentTarget.releasePointerCapture(event.pointerId)
     onCreateConstraint(rect)
+  }
+
+  function handlePointerCancel(event: PointerEvent<SVGSVGElement>) {
+    dragStartRef.current = null
+    setDraftRect(null)
+    releasePointerCapture(event)
   }
 
   function getSvgPoint(event: PointerEvent<SVGSVGElement>): Point {
@@ -100,6 +107,7 @@ export function PlanBoard({
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerCancel}
         >
           <defs>
             <pattern id="plan-grid" width="32" height="32" patternUnits="userSpaceOnUse">
@@ -173,6 +181,12 @@ export function PlanBoard({
       </CardContent>
     </Card>
   )
+}
+
+function releasePointerCapture(event: PointerEvent<SVGSVGElement>): void {
+  if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+    event.currentTarget.releasePointerCapture(event.pointerId)
+  }
 }
 
 function PlanElement({ element }: { element: DrawingElement }) {

@@ -72,3 +72,13 @@
 - Implemented project impact simulation for revised Option A with the additional-crew mitigation: `$5,300 + $1,200 = $6,500`, `0` final delay, and `$8,426,500` projected budget.
 - Implemented `DEC-019` preparation without approval and a human-only approval action that transitions to `APPROVED`.
 - Verified that `approve_decision` is never registered as a WebMCP tool and that `draft_change_order` appears only after human approval.
+
+## 2026-09-02 — Phases 9-12 local readiness completed
+
+- Added the final `CO-007` change-order draft artifact panel with project, decision, reason, scope, affected contract, cost, and schedule impact.
+- Tightened duplicate-safe retry behavior for impact simulation, decision preparation, and change-order drafting: stale replays return `STATE_CONFLICT`; valid current-state repeats do not duplicate artifacts or activity events.
+- Added visible workflow guardrail errors so invalid actions are explainable in the UI.
+- Added pointer-cancel cleanup for the plan drawing interaction and retained coordinate-field constraint creation for keyboard accessibility.
+- Expanded domain, UI, and WebMCP registry tests through the post-approval `draft_change_order` path.
+- Added `docs/EVALS.md`, `docs/SUBMISSION.md`, and `LICENSE` for local submission readiness.
+- Local deployment, public repository publication, narrated video, deployed five-run hero journey, and Devpost submission remain manual owner actions.

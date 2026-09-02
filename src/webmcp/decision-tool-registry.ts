@@ -22,6 +22,7 @@ const registrations = new Map<DecisionToolName, WebMcpRegistration | (() => void
 
 let storeUnsubscribe: (() => void) | null = null
 let registryStarted = false
+let webMcpRuntimeRefreshScheduled = false
 
 export function startDecisionToolRegistry(): () => void {
   if (registryStarted) {
@@ -89,9 +90,9 @@ function reconcileDecisionTools(): void {
     return
   }
 
-  const desiredTools = new Set(
-    availableToolNames(useDecisionRoomStore.getState()).filter(isDecisionToolName),
-  )
+  const previousToolNames = [...registrations.keys()]
+  const desiredToolNames = availableToolNames(useDecisionRoomStore.getState()).filter(isDecisionToolName)
+  const desiredTools = new Set(desiredToolNames)
 
   for (const toolName of registrations.keys()) {
     if (!desiredTools.has(toolName)) {
@@ -117,6 +118,7 @@ function reconcileDecisionTools(): void {
     error: null,
   })
   notifySubscribers()
+  scheduleWebMcpRuntimeRefresh(previousToolNames, desiredToolNames)
 }
 
 function registerTool(modelContext: NonNullable<ReturnType<typeof getModelContext>>, toolName: DecisionToolName): void {
@@ -181,6 +183,36 @@ function setRegistryStatus(nextStatus: RegistryStatus): void {
   }
 
   registryState = nextStatus
+}
+
+function scheduleWebMcpRuntimeRefresh(
+  previousToolNames: DecisionToolName[],
+  desiredToolNames: DecisionToolName[],
+): void {
+  if (
+    previousToolNames.length === 0 ||
+    toolNamesEqual(previousToolNames, desiredToolNames) ||
+    webMcpRuntimeRefreshScheduled ||
+    isTestRuntime()
+  ) {
+    return
+  }
+
+  webMcpRuntimeRefreshScheduled = true
+  window.setTimeout(() => {
+    window.location.reload()
+  }, 100)
+}
+
+function toolNamesEqual(left: DecisionToolName[], right: DecisionToolName[]): boolean {
+  return (
+    left.length === right.length &&
+    left.every((toolName, index) => toolName === right[index])
+  )
+}
+
+function isTestRuntime(): boolean {
+  return navigator.userAgent.toLowerCase().includes("jsdom")
 }
 
 function isDecisionToolName(value: string): value is DecisionToolName {

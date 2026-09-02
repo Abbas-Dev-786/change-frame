@@ -304,7 +304,7 @@ export function simulateProjectImpact(
     return conflict
   }
 
-  if (state.phase !== "OPTION_SELECTED") {
+  if (!["OPTION_SELECTED", "IMPACT_SIMULATED"].includes(state.phase)) {
     return failure(
       state,
       "INVALID_STATE",
@@ -322,9 +322,7 @@ export function simulateProjectImpact(
     )
   }
 
-  const option = state.resolutionOptions.find(
-    (candidate) => candidate.id === state.selectedOptionId,
-  )
+  const option = state.resolutionOptions.find((candidate) => candidate.id === state.selectedOptionId)
 
   if (!option) {
     return failure(
@@ -404,7 +402,7 @@ export function prepareChangeDecision(
     return conflict
   }
 
-  if (state.phase !== "IMPACT_SIMULATED") {
+  if (!["IMPACT_SIMULATED", "READY_FOR_APPROVAL"].includes(state.phase)) {
     return failure(
       state,
       "INVALID_STATE",
@@ -506,7 +504,7 @@ export function draftChangeOrder(
     return conflict
   }
 
-  if (state.phase !== "APPROVED" || !state.decision?.approvedAt) {
+  if (!["APPROVED", "CHANGE_ORDER_DRAFTED"].includes(state.phase) || !state.decision?.approvedAt) {
     return failure(
       state,
       "HUMAN_APPROVAL_REQUIRED",
