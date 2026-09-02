@@ -267,6 +267,9 @@ export function createInitialDecisionState(now = "2026-09-02T10:00:00.000Z"): De
     resolutionOptions: [],
     selectedOptionId: null,
     previewOptionId: null,
+    impactSimulation: null,
+    decision: null,
+    changeOrder: null,
     activityLog: [
       {
         id: "ACT-001",

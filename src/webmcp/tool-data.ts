@@ -1,0 +1,105 @@
+import type { DecisionRoomState, OptionId, ResolutionOption } from "@/src/domain/decision"
+
+export function decisionContextData(state: DecisionRoomState): Record<string, unknown> {
+  return {
+    project: {
+      id: state.project.id,
+      name: state.project.name,
+      budget: state.project.budget,
+    },
+    issue: {
+      id: state.activeIssue.id,
+      title: state.activeIssue.title,
+      severity: state.activeIssue.severity,
+      drawingId: state.activeIssue.drawingId,
+      location: state.activeIssue.location,
+    },
+    baselineConstraints: [
+      {
+        id: "BASE-01",
+        type: "fixed_element",
+        label: "Beam B14 cannot move",
+      },
+    ],
+    phase: state.phase,
+    stateVersion: state.stateVersion,
+    selectedOptionId: state.selectedOptionId,
+    availableTools: availableToolNames(state),
+  }
+}
+
+export function userConstraintsData(state: DecisionRoomState): Record<string, unknown> {
+  return {
+    constraints: state.constraints,
+  }
+}
+
+export function optionsData(state: DecisionRoomState): Record<string, unknown> {
+  return {
+    options: state.resolutionOptions.map(optionSummary),
+  }
+}
+
+export function revisedOptionData(state: DecisionRoomState, optionId: OptionId): Record<string, unknown> {
+  const option = state.resolutionOptions.find((candidate) => candidate.id === optionId)
+
+  return {
+    option: option ? optionSummary(option) : null,
+  }
+}
+
+export function simulationData(state: DecisionRoomState): Record<string, unknown> {
+  return state.impactSimulation ? state.impactSimulation : {}
+}
+
+export function decisionData(state: DecisionRoomState): Record<string, unknown> {
+  return {
+    decision: state.decision,
+  }
+}
+
+export function changeOrderData(state: DecisionRoomState): Record<string, unknown> {
+  return {
+    changeOrder: state.changeOrder,
+  }
+}
+
+export function availableToolNames(state: DecisionRoomState): string[] {
+  const tools = ["get_decision_context", "get_user_constraints"]
+
+  if (state.phase === "INVESTIGATING") {
+    tools.push("evaluate_resolution_options")
+  }
+
+  if (state.phase === "OPTIONS_AVAILABLE" && state.constraints.length > 0) {
+    tools.push("revise_resolution_option")
+  }
+
+  if (state.phase === "OPTION_SELECTED") {
+    tools.push("simulate_project_impact")
+  }
+
+  if (state.phase === "IMPACT_SIMULATED") {
+    tools.push("prepare_change_decision")
+  }
+
+  if (state.phase === "APPROVED") {
+    tools.push("draft_change_order")
+  }
+
+  return tools
+}
+
+function optionSummary(option: ResolutionOption) {
+  return {
+    id: option.id,
+    title: option.title,
+    revision: option.revision,
+    costImpact: option.costImpact,
+    scheduleImpactDays: option.scheduleImpactDays,
+    risk: option.risk,
+    constraintIds: option.constraintIds,
+    status: option.status,
+    routeOverlay: option.routeOverlay,
+  }
+}

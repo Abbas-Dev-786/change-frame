@@ -2,12 +2,17 @@ import { describe, expect, it } from "vitest"
 
 import {
   DEFAULT_CONSTRAINT_RECT,
+  approveDecisionByHuman,
   createInitialDecisionState,
+  draftChangeOrder,
   evaluateResolutionOptions,
+  prepareChangeDecision,
   reviseResolutionOption,
   routeIntersectsRect,
   selectResolutionOption,
+  simulateProjectImpact,
   upsertHumanConstraint,
+  type DomainResult,
 } from "./index"
 
 describe("decision state machine", () => {
@@ -124,9 +129,71 @@ describe("decision state machine", () => {
     expect(optionA?.constraintIds).toEqual(["CONSTRAINT-12"])
     expect(optionA && constraint ? routeIntersectsRect(optionA.routeOverlay, constraint.geometry) : true).toBe(false)
   })
+
+  it("simulates impact, prepares a decision, and requires human approval before drafting", () => {
+    const evaluated = requireSuccess(
+      evaluateResolutionOptions(createInitialDecisionState(), {
+        expectedStateVersion: 1,
+      }),
+    )
+    const constrained = requireSuccess(
+      upsertHumanConstraint(evaluated, {
+        label: "Electrical riser",
+        geometry: DEFAULT_CONSTRAINT_RECT,
+      }),
+    )
+    const revised = requireSuccess(
+      reviseResolutionOption(constrained, {
+        optionId: "OPTION-A",
+        expectedOptionRevision: 1,
+        expectedStateVersion: constrained.stateVersion,
+      }),
+    )
+    const selected = requireSuccess(selectResolutionOption(revised, "OPTION-A"))
+    const simulated = requireSuccess(
+      simulateProjectImpact(selected, {
+        preserveInspectionMilestone: true,
+        expectedStateVersion: selected.stateVersion,
+      }),
+    )
+
+    expect(simulated.phase).toBe("IMPACT_SIMULATED")
+    expect(simulated.impactSimulation?.baseChangeCost).toBe(5300)
+    expect(simulated.impactSimulation?.mitigation?.additionalCost).toBe(1200)
+    expect(simulated.impactSimulation?.totalCostImpact).toBe(6500)
+    expect(simulated.impactSimulation?.finalScheduleImpactDays).toBe(0)
+    expect(simulated.impactSimulation?.projectedBudget).toBe(8426500)
+
+    const prepared = requireSuccess(
+      prepareChangeDecision(simulated, {
+        expectedStateVersion: simulated.stateVersion,
+      }),
+    )
+
+    expect(prepared.phase).toBe("READY_FOR_APPROVAL")
+    expect(prepared.decision?.id).toBe("DEC-019")
+    expect(prepared.decision?.approvedAt).toBeNull()
+
+    const prematureDraft = draftChangeOrder(prepared, {
+      expectedStateVersion: prepared.stateVersion,
+    })
+
+    expect(prematureDraft.success).toBe(false)
+
+    if (!prematureDraft.success) {
+      expect(prematureDraft.error).toBe("HUMAN_APPROVAL_REQUIRED")
+    }
+
+    const approved = requireSuccess(
+      approveDecisionByHuman(prepared, "2026-09-02T10:10:00.000Z"),
+    )
+
+    expect(approved.phase).toBe("APPROVED")
+    expect(approved.decision?.approvedAt).toBe("2026-09-02T10:10:00.000Z")
+  })
 })
 
-function requireSuccess(result: ReturnType<typeof evaluateResolutionOptions>) {
+function requireSuccess(result: DomainResult) {
   if (!result.success) {
     throw new Error(result.message)
   }

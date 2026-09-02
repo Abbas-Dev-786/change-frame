@@ -38,12 +38,19 @@ export type ActivityEventType =
   | "option_revised"
   | "option_selected"
   | "selection_changed"
+  | "impact_simulated"
+  | "decision_prepared"
+  | "human_approved_decision"
+  | "change_order_drafted"
   | "demo_reset"
 
 export type ToolErrorCode =
   | "INVALID_STATE"
   | "OPTION_NOT_FOUND"
   | "CONSTRAINT_NOT_FOUND"
+  | "OPTION_NOT_SELECTED"
+  | "SIMULATION_REQUIRED"
+  | "HUMAN_APPROVAL_REQUIRED"
   | "STATE_CONFLICT"
   | "OPTION_REVISION_CONFLICT"
 
@@ -147,6 +154,52 @@ export type Contract = {
   value: number
 }
 
+export type Mitigation = {
+  id: "MIT-001"
+  type: "additional_mechanical_crew"
+  label: "Add second MEP crew"
+  additionalCost: number
+  daysRecovered: number
+}
+
+export type ProjectImpactSimulation = {
+  id: "SIM-019"
+  optionId: OptionId
+  optionRevision: number
+  preserveInspectionMilestone: boolean
+  baseChangeCost: number
+  baseScheduleImpactDays: number
+  mitigation: Mitigation | null
+  totalCostImpact: number
+  finalScheduleImpactDays: number
+  projectedBudget: number
+  fingerprint: string
+}
+
+export type Decision = {
+  id: "DEC-019"
+  issueId: "ISS-019"
+  optionId: OptionId
+  mitigationId: Mitigation["id"] | null
+  costImpact: number
+  scheduleImpactDays: number
+  status: "READY_FOR_APPROVAL" | "APPROVED"
+  approvedAt: string | null
+  sourceStateVersion: number
+  simulationFingerprint: string
+}
+
+export type ChangeOrder = {
+  id: "CO-007"
+  decisionId: "DEC-019"
+  reason: string
+  scope: string
+  costImpact: number
+  scheduleImpactDays: number
+  status: "draft"
+  sourceDecisionVersion: number
+}
+
 export type ActivityEvent = {
   id: string
   type: ActivityEventType
@@ -169,6 +222,9 @@ export type DecisionRoomState = {
   resolutionOptions: ResolutionOption[]
   selectedOptionId: OptionId | null
   previewOptionId: OptionId | null
+  impactSimulation: ProjectImpactSimulation | null
+  decision: Decision | null
+  changeOrder: ChangeOrder | null
   activityLog: ActivityEvent[]
   lastError: ToolErrorCode | null
 }

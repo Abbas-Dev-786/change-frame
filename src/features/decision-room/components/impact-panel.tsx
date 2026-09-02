@@ -5,6 +5,7 @@ import {
   formatCurrency,
   formatScheduleImpact,
   formatSignedCurrency,
+  type ProjectImpactSimulation,
   type Project,
   type ResolutionOption,
 } from "@/src/domain/decision"
@@ -12,11 +13,13 @@ import {
 type ImpactPanelProps = {
   project: Project
   selectedOption: ResolutionOption | null
+  simulation: ProjectImpactSimulation | null
 }
 
-export function ImpactPanel({ project, selectedOption }: ImpactPanelProps) {
+export function ImpactPanel({ project, selectedOption, simulation }: ImpactPanelProps) {
   const selectedCost = selectedOption?.costImpact ?? 0
-  const projectedBudget = project.currentForecast + selectedCost
+  const totalCost = simulation?.totalCostImpact ?? selectedCost
+  const projectedBudget = simulation?.projectedBudget ?? project.currentForecast + selectedCost
 
   return (
     <Card className="rounded-lg border-border/70 bg-card py-4 shadow-sm">
@@ -31,7 +34,19 @@ export function ImpactPanel({ project, selectedOption }: ImpactPanelProps) {
         />
         <ImpactRow
           icon={<Banknote aria-hidden="true" />}
-          label="Selected change"
+          label={simulation ? "Final change" : "Selected change"}
+          value={formatSignedCurrency(totalCost)}
+        />
+        {simulation?.mitigation ? (
+          <ImpactRow
+            icon={<Banknote aria-hidden="true" />}
+            label="Mitigation cost"
+            value={formatSignedCurrency(simulation.mitigation.additionalCost)}
+          />
+        ) : null}
+        <ImpactRow
+          icon={<Banknote aria-hidden="true" />}
+          label="Base route change"
           value={formatSignedCurrency(selectedCost)}
         />
         <ImpactRow
@@ -42,7 +57,7 @@ export function ImpactPanel({ project, selectedOption }: ImpactPanelProps) {
         <ImpactRow
           icon={<CalendarClock aria-hidden="true" />}
           label="Schedule"
-          value={formatScheduleImpact(selectedOption?.scheduleImpactDays ?? 0)}
+          value={formatScheduleImpact(simulation?.finalScheduleImpactDays ?? selectedOption?.scheduleImpactDays ?? 0)}
         />
         <ImpactRow
           icon={<CalendarClock aria-hidden="true" />}

@@ -7,6 +7,7 @@ import type {
   DomainFailure,
   DomainResult,
   DomainSuccess,
+  Mitigation,
   OptionId,
   Rect,
   ResolutionOption,
@@ -18,13 +19,17 @@ export type ConstraintDraft = {
   geometry: Rect
 }
 
-type ExpectedVersionInput = {
+export type ExpectedVersionInput = {
   expectedStateVersion: number
 }
 
-type RevisionInput = ExpectedVersionInput & {
+export type RevisionInput = ExpectedVersionInput & {
   optionId: OptionId
   expectedOptionRevision: number
+}
+
+export type SimulateImpactInput = ExpectedVersionInput & {
+  preserveInspectionMilestone: boolean
 }
 
 export function evaluateResolutionOptions(
@@ -137,6 +142,9 @@ export function upsertHumanConstraint(
         resolutionOptions: markedOptions,
         selectedOptionId: null,
         previewOptionId: "OPTION-A",
+        impactSimulation: null,
+        decision: null,
+        changeOrder: null,
         lastError: null,
       },
       "constraint_upserted",
@@ -216,6 +224,9 @@ export function reviseResolutionOption(
         ),
         selectedOptionId: null,
         previewOptionId: option.id,
+        impactSimulation: null,
+        decision: null,
+        changeOrder: null,
         lastError: null,
       },
       "option_revised",
@@ -264,6 +275,9 @@ export function selectResolutionOption(
         stateVersion: state.stateVersion + 1,
         selectedOptionId: optionId,
         previewOptionId: optionId,
+        impactSimulation: null,
+        decision: null,
+        changeOrder: null,
         resolutionOptions: state.resolutionOptions.map((candidate) => ({
           ...candidate,
           status: candidate.id === optionId ? "selected" : candidate.status === "selected" ? "available" : candidate.status,
@@ -273,6 +287,263 @@ export function selectResolutionOption(
       state.selectedOptionId ? "selection_changed" : "option_selected",
       state.selectedOptionId ? "Selection changed" : "Option selected",
       `${optionId} selected by the human reviewer.`,
+      now,
+    ),
+    true,
+  )
+}
+
+export function simulateProjectImpact(
+  state: DecisionRoomState,
+  input: SimulateImpactInput,
+  now = new Date().toISOString(),
+): DomainResult {
+  const conflict = validateExpectedVersion(state, input.expectedStateVersion)
+
+  if (conflict) {
+    return conflict
+  }
+
+  if (state.phase !== "OPTION_SELECTED") {
+    return failure(
+      state,
+      "INVALID_STATE",
+      "Project impact can only be simulated after the human selects an option.",
+      false,
+    )
+  }
+
+  if (!state.selectedOptionId) {
+    return failure(
+      state,
+      "OPTION_NOT_SELECTED",
+      "A human-selected option is required before simulating project impact.",
+      false,
+    )
+  }
+
+  const option = state.resolutionOptions.find(
+    (candidate) => candidate.id === state.selectedOptionId,
+  )
+
+  if (!option) {
+    return failure(
+      state,
+      "OPTION_NOT_FOUND",
+      "The selected option does not exist in the current decision state.",
+      false,
+    )
+  }
+
+  const mitigation: Mitigation | null = input.preserveInspectionMilestone
+    ? {
+        id: "MIT-001",
+        type: "additional_mechanical_crew",
+        label: "Add second MEP crew",
+        additionalCost: 1200,
+        daysRecovered: 1,
+      }
+    : null
+
+  const fingerprint = [
+    option.id,
+    option.revision,
+    option.fingerprint,
+    input.preserveInspectionMilestone,
+  ].join(":")
+  const simulation = {
+    id: "SIM-019" as const,
+    optionId: option.id,
+    optionRevision: option.revision,
+    preserveInspectionMilestone: input.preserveInspectionMilestone,
+    baseChangeCost: option.costImpact,
+    baseScheduleImpactDays: option.scheduleImpactDays,
+    mitigation,
+    totalCostImpact: option.costImpact + (mitigation?.additionalCost ?? 0),
+    finalScheduleImpactDays: Math.max(
+      0,
+      option.scheduleImpactDays - (mitigation?.daysRecovered ?? 0),
+    ),
+    projectedBudget:
+      state.project.currentForecast + option.costImpact + (mitigation?.additionalCost ?? 0),
+    fingerprint,
+  }
+
+  if (state.impactSimulation?.fingerprint === fingerprint) {
+    return success(state, false)
+  }
+
+  return success(
+    withActivity(
+      {
+        ...state,
+        phase: "IMPACT_SIMULATED",
+        stateVersion: state.stateVersion + 1,
+        impactSimulation: simulation,
+        decision: null,
+        changeOrder: null,
+        lastError: null,
+      },
+      "impact_simulated",
+      "Impact simulated",
+      `${formatSignedCurrency(simulation.totalCostImpact)} and ${formatScheduleImpact(simulation.finalScheduleImpactDays)} final schedule impact.`,
+      now,
+    ),
+    true,
+  )
+}
+
+export function prepareChangeDecision(
+  state: DecisionRoomState,
+  input: ExpectedVersionInput,
+  now = new Date().toISOString(),
+): DomainResult {
+  const conflict = validateExpectedVersion(state, input.expectedStateVersion)
+
+  if (conflict) {
+    return conflict
+  }
+
+  if (state.phase !== "IMPACT_SIMULATED") {
+    return failure(
+      state,
+      "INVALID_STATE",
+      "A simulated impact is required before preparing the decision.",
+      false,
+    )
+  }
+
+  if (!state.impactSimulation) {
+    return failure(
+      state,
+      "SIMULATION_REQUIRED",
+      "Run project impact simulation before preparing the decision.",
+      false,
+    )
+  }
+
+  if (state.decision?.simulationFingerprint === state.impactSimulation.fingerprint) {
+    return success(state, false)
+  }
+
+  return success(
+    withActivity(
+      {
+        ...state,
+        phase: "READY_FOR_APPROVAL",
+        stateVersion: state.stateVersion + 1,
+        decision: {
+          id: "DEC-019",
+          issueId: "ISS-019",
+          optionId: state.impactSimulation.optionId,
+          mitigationId: state.impactSimulation.mitigation?.id ?? null,
+          costImpact: state.impactSimulation.totalCostImpact,
+          scheduleImpactDays: state.impactSimulation.finalScheduleImpactDays,
+          status: "READY_FOR_APPROVAL",
+          approvedAt: null,
+          sourceStateVersion: state.stateVersion,
+          simulationFingerprint: state.impactSimulation.fingerprint,
+        },
+        changeOrder: null,
+        lastError: null,
+      },
+      "decision_prepared",
+      "Decision prepared",
+      "DEC-019 is ready for human approval.",
+      now,
+    ),
+    true,
+  )
+}
+
+export function approveDecisionByHuman(
+  state: DecisionRoomState,
+  now = new Date().toISOString(),
+): DomainResult {
+  if (state.phase !== "READY_FOR_APPROVAL" || !state.decision) {
+    return failure(
+      state,
+      "INVALID_STATE",
+      "Human approval is enabled only when DEC-019 is ready for approval.",
+      false,
+    )
+  }
+
+  if (state.decision.approvedAt) {
+    return success(state, false)
+  }
+
+  return success(
+    withActivity(
+      {
+        ...state,
+        phase: "APPROVED",
+        stateVersion: state.stateVersion + 1,
+        decision: {
+          ...state.decision,
+          status: "APPROVED",
+          approvedAt: now,
+        },
+        lastError: null,
+      },
+      "human_approved_decision",
+      "Decision approved",
+      "DEC-019 approved by the human project manager.",
+      now,
+    ),
+    true,
+  )
+}
+
+export function draftChangeOrder(
+  state: DecisionRoomState,
+  input: ExpectedVersionInput,
+  now = new Date().toISOString(),
+): DomainResult {
+  const conflict = validateExpectedVersion(state, input.expectedStateVersion)
+
+  if (conflict) {
+    return conflict
+  }
+
+  if (state.phase !== "APPROVED" || !state.decision?.approvedAt) {
+    return failure(
+      state,
+      "HUMAN_APPROVAL_REQUIRED",
+      "Human approval is required before drafting the change order.",
+      false,
+    )
+  }
+
+  const changeOrder = {
+    id: "CO-007" as const,
+    decisionId: "DEC-019" as const,
+    reason:
+      "Field coordination conflict between mechanical duct D22 and structural beam B14.",
+    scope:
+      "Reroute supply duct through Corridor C East and add additional MEP labor to preserve inspection milestone.",
+    costImpact: state.decision.costImpact,
+    scheduleImpactDays: state.decision.scheduleImpactDays,
+    status: "draft" as const,
+    sourceDecisionVersion: state.stateVersion,
+  }
+
+  if (state.changeOrder?.decisionId === changeOrder.decisionId) {
+    return success(state, false)
+  }
+
+  return success(
+    withActivity(
+      {
+        ...state,
+        phase: "CHANGE_ORDER_DRAFTED",
+        stateVersion: state.stateVersion + 1,
+        changeOrder,
+        lastError: null,
+      },
+      "change_order_drafted",
+      "Change order drafted",
+      "CO-007 draft created from approved DEC-019.",
       now,
     ),
     true,

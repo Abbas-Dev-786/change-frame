@@ -64,3 +64,11 @@
 - Added pointer and keyboard-coordinate creation paths for the single MVP blocked-region constraint.
 - Implemented deterministic resolution options plus the revised Option A Corridor C East route with `$5,300` and `+1 day` impact.
 - Removed the active Phase 0 spike tool source so the running app no longer exposes `get_phase_zero_status`.
+
+## 2026-09-02 — Phases 5-8 implemented
+
+- Added production WebMCP descriptors, JSON schemas, input guards, response envelopes, and dynamic registration for the seven MVP domain tools.
+- Wired WebMCP mutation tools through the same central domain actions used by the UI, preserving stale replay conflict behavior and duplicate-safe upserts.
+- Implemented project impact simulation for revised Option A with the additional-crew mitigation: `$5,300 + $1,200 = $6,500`, `0` final delay, and `$8,426,500` projected budget.
+- Implemented `DEC-019` preparation without approval and a human-only approval action that transitions to `APPROVED`.
+- Verified that `approve_decision` is never registered as a WebMCP tool and that `draft_change_order` appears only after human approval.

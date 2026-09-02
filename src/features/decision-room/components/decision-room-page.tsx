@@ -2,16 +2,20 @@ import { useState } from "react"
 
 import { DEFAULT_CONSTRAINT_RECT, getPreviewedOption, type ConstraintDraft, type Rect } from "@/src/domain/decision"
 import { useDecisionRoom } from "../hooks/use-decision-room"
+import { useDecisionWebMcp } from "../hooks/use-decision-webmcp"
 import { ActivityTimeline } from "./activity-timeline"
 import { ConstraintControls } from "./constraint-controls"
+import { DecisionPanel } from "./decision-panel"
 import { DecisionHeader } from "./decision-header"
 import { ImpactPanel } from "./impact-panel"
 import { IssuePanel } from "./issue-panel"
 import { OptionsPanel } from "./options-panel"
 import { PlanBoard } from "./plan-board"
+import { WebMcpStatusPanel } from "./webmcp-status-panel"
 
 export function DecisionRoomPage() {
   const room = useDecisionRoom()
+  const webmcpStatus = useDecisionWebMcp()
   const [constraintLabel, setConstraintLabel] = useState("Electrical riser")
   const canAddConstraint = room.phase === "OPTIONS_AVAILABLE"
   const previewedOption = getPreviewedOption(room)
@@ -67,6 +71,7 @@ export function DecisionRoomPage() {
               onLabelChange={setConstraintLabel}
               onSubmit={handleConstraintSubmit}
             />
+            <WebMcpStatusPanel status={webmcpStatus} />
           </div>
 
           <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-1">
@@ -86,6 +91,15 @@ export function DecisionRoomPage() {
               selectedOption={room.resolutionOptions.find(
                 (option) => option.id === room.selectedOptionId,
               ) ?? null}
+              simulation={room.impactSimulation}
+            />
+            <DecisionPanel
+              phase={room.phase}
+              simulation={room.impactSimulation}
+              decision={room.decision}
+              onSimulate={() => room.simulateImpact(true)}
+              onPrepare={room.prepareDecision}
+              onApprove={room.approveDecision}
             />
             <ActivityTimeline events={room.activityLog} />
           </div>

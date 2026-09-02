@@ -2,15 +2,23 @@ import { create } from "zustand"
 
 import {
   createInitialDecisionState,
+  approveDecisionByHuman,
+  draftChangeOrder,
   evaluateResolutionOptions,
+  prepareChangeDecision,
   resetDecisionRoom,
   reviseResolutionOption,
   selectResolutionOption,
   setPreviewOption,
+  simulateProjectImpact,
   upsertHumanConstraint,
   type ConstraintDraft,
   type DecisionRoomState,
+  type DomainResult,
+  type ExpectedVersionInput,
   type OptionId,
+  type RevisionInput,
+  type SimulateImpactInput,
 } from "@/src/domain/decision"
 
 const STORAGE_KEY = "changedecision-os:decision-room:v1"
@@ -20,6 +28,10 @@ type DecisionRoomActions = {
   upsertConstraint: (draft: ConstraintDraft) => void
   reviseOption: (optionId: OptionId) => void
   selectOption: (optionId: OptionId) => void
+  simulateImpact: (preserveInspectionMilestone: boolean) => void
+  prepareDecision: () => void
+  approveDecision: () => void
+  draftChangeOrder: () => void
   previewOption: (optionId: OptionId | null) => void
   resetDemo: () => void
 }
@@ -34,12 +46,12 @@ export const useDecisionRoomStore = create<DecisionRoomStore>((set, get) => ({
       expectedStateVersion: currentState.stateVersion,
     })
 
-    commitState(set, result.state)
+    commitDecisionRoomState(set, result.state)
   },
   upsertConstraint: (draft) => {
     const result = upsertHumanConstraint(readCurrentState(get()), draft)
 
-    commitState(set, result.state)
+    commitDecisionRoomState(set, result.state)
   },
   reviseOption: (optionId) => {
     const currentState = readCurrentState(get())
@@ -55,21 +67,51 @@ export const useDecisionRoomStore = create<DecisionRoomStore>((set, get) => ({
       expectedStateVersion: currentState.stateVersion,
     })
 
-    commitState(set, result.state)
+    commitDecisionRoomState(set, result.state)
   },
   selectOption: (optionId) => {
     const result = selectResolutionOption(readCurrentState(get()), optionId)
 
-    commitState(set, result.state)
+    commitDecisionRoomState(set, result.state)
+  },
+  simulateImpact: (preserveInspectionMilestone) => {
+    const currentState = readCurrentState(get())
+    const result = simulateProjectImpact(currentState, {
+      preserveInspectionMilestone,
+      expectedStateVersion: currentState.stateVersion,
+    })
+
+    commitDecisionRoomState(set, result.state)
+  },
+  prepareDecision: () => {
+    const currentState = readCurrentState(get())
+    const result = prepareChangeDecision(currentState, {
+      expectedStateVersion: currentState.stateVersion,
+    })
+
+    commitDecisionRoomState(set, result.state)
+  },
+  approveDecision: () => {
+    const result = approveDecisionByHuman(readCurrentState(get()))
+
+    commitDecisionRoomState(set, result.state)
+  },
+  draftChangeOrder: () => {
+    const currentState = readCurrentState(get())
+    const result = draftChangeOrder(currentState, {
+      expectedStateVersion: currentState.stateVersion,
+    })
+
+    commitDecisionRoomState(set, result.state)
   },
   previewOption: (optionId) => {
     const nextState = setPreviewOption(readCurrentState(get()), optionId)
 
-    commitState(set, nextState)
+    commitDecisionRoomState(set, nextState)
   },
   resetDemo: () => {
     clearSavedState()
-    commitState(
+    commitDecisionRoomState(
       set,
       resetDecisionRoom(() => createInitialDecisionState(new Date().toISOString())),
     )
@@ -91,12 +133,60 @@ function readCurrentState(store: DecisionRoomStore): DecisionRoomState {
     resolutionOptions: store.resolutionOptions,
     selectedOptionId: store.selectedOptionId,
     previewOptionId: store.previewOptionId,
+    impactSimulation: store.impactSimulation,
+    decision: store.decision,
+    changeOrder: store.changeOrder,
     activityLog: store.activityLog,
     lastError: store.lastError,
   }
 }
 
-function commitState(
+export function getDecisionRoomState(): DecisionRoomState {
+  return readCurrentState(useDecisionRoomStore.getState())
+}
+
+export function runDecisionToolAction(
+  action:
+    | { type: "evaluate_options"; input: ExpectedVersionInput }
+    | { type: "revise_option"; input: RevisionInput }
+    | { type: "simulate_impact"; input: SimulateImpactInput }
+    | { type: "prepare_decision"; input: ExpectedVersionInput }
+    | { type: "draft_change_order"; input: ExpectedVersionInput },
+): DomainResult {
+  const state = getDecisionRoomState()
+  const result = executeToolAction(state, action)
+
+  if (result.success) {
+    commitDecisionRoomState(useDecisionRoomStore.setState, result.state)
+  }
+
+  return result
+}
+
+function executeToolAction(
+  state: DecisionRoomState,
+  action:
+    | { type: "evaluate_options"; input: ExpectedVersionInput }
+    | { type: "revise_option"; input: RevisionInput }
+    | { type: "simulate_impact"; input: SimulateImpactInput }
+    | { type: "prepare_decision"; input: ExpectedVersionInput }
+    | { type: "draft_change_order"; input: ExpectedVersionInput },
+): DomainResult {
+  switch (action.type) {
+    case "evaluate_options":
+      return evaluateResolutionOptions(state, action.input)
+    case "revise_option":
+      return reviseResolutionOption(state, action.input)
+    case "simulate_impact":
+      return simulateProjectImpact(state, action.input)
+    case "prepare_decision":
+      return prepareChangeDecision(state, action.input)
+    case "draft_change_order":
+      return draftChangeOrder(state, action.input)
+  }
+}
+
+function commitDecisionRoomState(
   set: (state: Partial<DecisionRoomStore>) => void,
   state: DecisionRoomState,
 ): void {
@@ -161,6 +251,9 @@ function isDecisionRoomState(value: unknown): value is DecisionRoomState {
     value.activeDrawingId === "M-204" &&
     Array.isArray(value.constraints) &&
     Array.isArray(value.resolutionOptions) &&
+    "impactSimulation" in value &&
+    "decision" in value &&
+    "changeOrder" in value &&
     Array.isArray(value.activityLog)
   )
 }

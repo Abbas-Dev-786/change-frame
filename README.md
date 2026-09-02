@@ -2,12 +2,15 @@
 
 ChangeDecision OS is a WebMCP-native construction decision workspace for resolving a synthetic HVAC duct and structural beam conflict at Riverside Office Tower.
 
-The current build implements Phases 1-4 of the MVP:
+The current build implements Phases 1-8 of the MVP:
 
 - versioned central decision state and deterministic state-machine actions
 - decision-room UI with issue, plan, options, impact, and activity panels
 - human-created blocked-region constraints by pointer or coordinate fields
 - predefined resolution routes, Corridor C East revision logic, and geometry tests
+- production WebMCP read and mutation tools through `draft_change_order`
+- dynamic tool registration by decision phase
+- explicit human-only approval before `draft_change_order` becomes available
 
 The interface uses Tailwind CSS and shared shadcn/ui primitives. Product code follows a feature-oriented modular architecture documented in [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md); explicit `any` types are prohibited by a repository quality gate.
 
@@ -35,7 +38,7 @@ npm run verify
 
 This checks the no-`any` rule, TypeScript, tests, and the production build.
 
-WebMCP production tools begin in Phase 5. Until then, the human interface is fully usable and the Phase 0 spike tool has been removed from the active app.
+The human interface remains usable without WebMCP. In a supported browser, the app exposes only the tools valid for the current decision phase.
 
 ## Deployment
 
@@ -55,4 +58,4 @@ dist
 
 ## Phase boundary
 
-Phases 5-6 add the production WebMCP tools from [`docs/PRD.md`](./docs/PRD.md). Phases 7-9 add dynamic lifecycle reconciliation, human approval, and the change-order draft.
+Phase 9 is the next product boundary: render the polished change-order draft panel after the already-implemented `draft_change_order` tool runs.

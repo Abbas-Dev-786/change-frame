@@ -4,10 +4,16 @@ import { afterEach, expect, it } from "vitest"
 import { App } from "./App"
 import { useDecisionRoomStore } from "./store/decision-room-store"
 import { createInitialDecisionState } from "./domain/decision"
+import { resetDecisionToolRegistryForTests } from "./webmcp/decision-tool-registry"
 
 afterEach(() => {
+  resetDecisionToolRegistryForTests()
   window.sessionStorage.clear()
   useDecisionRoomStore.setState(createInitialDecisionState())
+  Object.defineProperty(document, "modelContext", {
+    configurable: true,
+    value: undefined,
+  })
 })
 
 it("loads the decision room in the canonical investigating state", () => {
@@ -28,4 +34,19 @@ it("materializes options and creates a keyboard coordinate constraint", () => {
   expect(screen.getByText("Options available")).toBeVisible()
   expect(screen.getByText("OPTION-A - Reroute through Corridor C")).toBeVisible()
   expect(screen.getByText("Constraint added")).toBeVisible()
+})
+
+it("keeps approval human-only after the decision is prepared", () => {
+  render(<App />)
+
+  fireEvent.click(screen.getByRole("button", { name: /evaluate options/i }))
+  fireEvent.click(screen.getByRole("button", { name: /create constraint-12/i }))
+  fireEvent.click(screen.getAllByRole("button", { name: /^Revise$/i })[0])
+  fireEvent.click(screen.getAllByRole("button", { name: /^Select$/i })[0])
+  fireEvent.click(screen.getByRole("button", { name: /simulate impact/i }))
+  fireEvent.click(screen.getByRole("button", { name: /prepare decision/i }))
+
+  expect(screen.getByText("Ready for approval")).toBeVisible()
+  expect(screen.getByRole("button", { name: /approve decision/i })).toBeEnabled()
+  expect(screen.getByText("DEC-019 is ready for human approval.")).toBeVisible()
 })
