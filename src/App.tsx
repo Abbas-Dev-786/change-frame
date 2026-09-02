@@ -1,5 +1,5 @@
-import { PhaseZeroPage } from "./features/phase-zero/components/phase-zero-page"
+import { DecisionRoomPage } from "./features/decision-room/components/decision-room-page"
 
 export function App() {
-  return <PhaseZeroPage />
+  return <DecisionRoomPage />
 }

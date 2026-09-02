@@ -7,12 +7,12 @@ The application is a source-level modular monolith. It deploys as one static web
 ```text
 components/ui (shared shadcn primitives)
                 ↑
-feature components → feature hooks → WebMCP adapter → feature model
+feature components → feature hooks → store adapter → domain policy
                 ↑
               App.tsx
 ```
 
-Dependencies point toward the Phase 0 model. The model contains no React, Tailwind, shadcn, browser API, or persistence imports.
+Dependencies point toward the domain model. The domain layer contains no React, Tailwind, shadcn, browser API, Zustand, or persistence imports.
 
 ## Top-level structure
 
@@ -20,12 +20,12 @@ Dependencies point toward the Phase 0 model. The model contains no React, Tailwi
 components/ui/                         generated shadcn primitives
 hooks/                                 shared shadcn hooks
 lib/                                   shared framework utilities
-src/features/phase-zero/model/         Phase 0 contracts and result types
-src/features/phase-zero/webmcp/        browser boundary and tool lifecycle
-src/features/phase-zero/hooks/         React adapter for external-store state
-src/features/phase-zero/components/    Phase 0 presentation components
-src/App.tsx                             application composition root
-src/main.tsx                            React browser bootstrap
+src/domain/decision/                   entities, fixtures, geometry, state-machine actions
+src/store/                             Zustand state adapter and session persistence
+src/features/decision-room/hooks/      React hook for decision-room state
+src/features/decision-room/components/ Decision Room presentation components
+src/App.tsx                            application composition root
+src/main.tsx                           React browser bootstrap
 scripts/                                repository quality checks
 ```
 
@@ -37,4 +37,4 @@ scripts/                                repository quality checks
 - WebMCP modules translate browser behavior into feature-owned contracts.
 - Components consume feature hooks; they do not register WebMCP tools directly.
 - Explicit `any` types are prohibited and checked by `npm run check:no-any`.
-- Phase 1 may introduce `domain`, `store`, and additional feature modules without changing the WebMCP boundary direction.
+- WebMCP production tools in later phases must call the same domain actions as the UI.

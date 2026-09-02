@@ -1,6 +1,13 @@
 # ChangeDecision OS
 
-Phase 0 is a disposable WebMCP compatibility spike for the ChangeDecision OS hackathon MVP. It proves that a deployed React page can register one read-only imperative WebMCP tool and visibly confirm invocation before the product workflow is built.
+ChangeDecision OS is a WebMCP-native construction decision workspace for resolving a synthetic HVAC duct and structural beam conflict at Riverside Office Tower.
+
+The current build implements Phases 1-4 of the MVP:
+
+- versioned central decision state and deterministic state-machine actions
+- decision-room UI with issue, plan, options, impact, and activity panels
+- human-created blocked-region constraints by pointer or coordinate fields
+- predefined resolution routes, Corridor C East revision logic, and geometry tests
 
 The interface uses Tailwind CSS and shared shadcn/ui primitives. Product code follows a feature-oriented modular architecture documented in [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md); explicit `any` types are prohibited by a repository quality gate.
 
@@ -28,18 +35,7 @@ npm run verify
 
 This checks the no-`any` rule, TypeScript, tests, and the production build.
 
-After deploying the repository, open the HTTPS URL in either:
-
-- ChatGPT's in-app browser, or
-- Chrome 149+ with `chrome://flags/#enable-webmcp-testing` enabled and Chrome restarted.
-
-Ask the browser agent:
-
-> Check whether the ChangeDecision OS Phase 0 WebMCP spike is ready.
-
-Phase 0 passes when the agent discovers and invokes `get_phase_zero_status`, receives `status: ready`, and the visible invocation count increments.
-
-In Chrome, the tool can also be inspected and manually invoked from **DevTools → Application → WebMCP**. If that pane is unavailable, enable `chrome://flags/#devtools-webmcp-support` and restart Chrome.
+WebMCP production tools begin in Phase 5. Until then, the human interface is fully usable and the Phase 0 spike tool has been removed from the active app.
 
 ## Deployment
 
@@ -59,4 +55,4 @@ dist
 
 ## Phase boundary
 
-`get_phase_zero_status` exists only for the compatibility spike. Remove it when Phase 1 begins; the production tool registry is defined in [`docs/PRD.md`](./docs/PRD.md).
+Phases 5-6 add the production WebMCP tools from [`docs/PRD.md`](./docs/PRD.md). Phases 7-9 add dynamic lifecycle reconciliation, human approval, and the change-order draft.

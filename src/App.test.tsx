@@ -1,31 +1,31 @@
-import { render, screen, waitFor } from "@testing-library/react"
+import { fireEvent, render, screen } from "@testing-library/react"
 import { afterEach, expect, it } from "vitest"
 
 import { App } from "./App"
-import { resetPhaseZeroRegistryForTests } from "./features/phase-zero/webmcp/phase-zero-registry"
+import { useDecisionRoomStore } from "./store/decision-room-store"
+import { createInitialDecisionState } from "./domain/decision"
 
 afterEach(() => {
-  resetPhaseZeroRegistryForTests()
-  Object.defineProperty(document, "modelContext", {
-    configurable: true,
-    value: undefined,
-  })
+  window.sessionStorage.clear()
+  useDecisionRoomStore.setState(createInitialDecisionState())
 })
 
-it("keeps the human-facing spike usable when WebMCP is unavailable", async () => {
-  Object.defineProperty(document, "modelContext", {
-    configurable: true,
-    value: undefined,
-  })
-
+it("loads the decision room in the canonical investigating state", () => {
   render(<App />)
 
-  expect(
-    screen.getByRole('heading', {
-      name: "Prove the browser connection before building the product.",
-    }),
-  ).toBeVisible()
-  await waitFor(() => {
-    expect(screen.getByText("WebMCP unavailable")).toBeVisible()
-  })
+  expect(screen.getByRole("heading", { name: "ChangeDecision OS" })).toBeVisible()
+  expect(screen.getByText("ISS-019")).toBeVisible()
+  expect(screen.getByText("HVAC duct conflicts with structural beam B14")).toBeVisible()
+  expect(screen.getByText("Investigating")).toBeVisible()
+})
+
+it("materializes options and creates a keyboard coordinate constraint", () => {
+  render(<App />)
+
+  fireEvent.click(screen.getByRole("button", { name: /evaluate options/i }))
+  fireEvent.click(screen.getByRole("button", { name: /create constraint-12/i }))
+
+  expect(screen.getByText("Options available")).toBeVisible()
+  expect(screen.getByText("OPTION-A - Reroute through Corridor C")).toBeVisible()
+  expect(screen.getByText("Constraint added")).toBeVisible()
 })

@@ -55,3 +55,12 @@
 - Added a Vite alias for the existing shadcn `@/` imports, architecture documentation, and a `check:no-any` repository gate included in `npm run verify`.
 - Rebuilt the spike interface from Tailwind utilities and shadcn primitives while preserving the WebMCP lifecycle and human-readable diagnostics.
 - Local browser verification discovered the registered tool and exposed a compatibility edge where a browser agent may omit the execution-options argument; the adapter now accepts that optional argument while retaining abort handling when a signal is supplied.
+
+## 2026-09-02 — Phases 1-4 implemented
+
+- Implemented the pure `src/domain/decision` module for synthetic project data, state-machine actions, duplicate/replay-safe mutations, stable `CONSTRAINT-12` replacement, and route/rectangle geometry checks.
+- Added a Zustand-backed central store with same-tab `sessionStorage` restore and reset semantics.
+- Replaced the disposable Phase 0 page with the Decision Room product surface: SVG plan, issue facts, options, impact summary, activity timeline, and human constraint controls.
+- Added pointer and keyboard-coordinate creation paths for the single MVP blocked-region constraint.
+- Implemented deterministic resolution options plus the revised Option A Corridor C East route with `$5,300` and `+1 day` impact.
+- Removed the active Phase 0 spike tool source so the running app no longer exposes `get_phase_zero_status`.

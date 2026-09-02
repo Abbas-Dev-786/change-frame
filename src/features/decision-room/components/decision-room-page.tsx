@@ -1,0 +1,96 @@
+import { useState } from "react"
+
+import { DEFAULT_CONSTRAINT_RECT, getPreviewedOption, type ConstraintDraft, type Rect } from "@/src/domain/decision"
+import { useDecisionRoom } from "../hooks/use-decision-room"
+import { ActivityTimeline } from "./activity-timeline"
+import { ConstraintControls } from "./constraint-controls"
+import { DecisionHeader } from "./decision-header"
+import { ImpactPanel } from "./impact-panel"
+import { IssuePanel } from "./issue-panel"
+import { OptionsPanel } from "./options-panel"
+import { PlanBoard } from "./plan-board"
+
+export function DecisionRoomPage() {
+  const room = useDecisionRoom()
+  const [constraintLabel, setConstraintLabel] = useState("Electrical riser")
+  const canAddConstraint = room.phase === "OPTIONS_AVAILABLE"
+  const previewedOption = getPreviewedOption(room)
+
+  function handleConstraintSubmit(geometry: Rect) {
+    if (room.constraints.length > 0) {
+      const confirmed = window.confirm(
+        "Replace the existing MVP constraint CONSTRAINT-12?",
+      )
+
+      if (!confirmed) {
+        return
+      }
+    }
+
+    const draft: ConstraintDraft = {
+      label: constraintLabel,
+      geometry,
+    }
+
+    room.upsertConstraint(draft)
+  }
+
+  return (
+    <main className="min-h-screen bg-background">
+      <div className="mx-auto flex w-[min(1440px,calc(100%_-_2rem))] flex-col gap-4 py-4 lg:py-6">
+        <DecisionHeader
+          phase={room.phase}
+          stateVersion={room.stateVersion}
+          projectName={room.project.name}
+          canEvaluate={room.phase === "INVESTIGATING"}
+          onEvaluate={room.evaluateOptions}
+          onReset={room.resetDemo}
+        />
+
+        <section className="grid gap-4 xl:grid-cols-[minmax(620px,1.35fr)_minmax(420px,0.9fr)]">
+          <div className="flex flex-col gap-4">
+            <PlanBoard
+              issue={room.activeIssue}
+              elements={room.drawingElements}
+              constraints={room.constraints}
+              options={room.resolutionOptions}
+              previewOptionId={previewedOption?.id ?? room.resolutionOptions[0]?.id ?? null}
+              canCreateConstraint={canAddConstraint}
+              onCreateConstraint={handleConstraintSubmit}
+            />
+
+            <ConstraintControls
+              disabled={!canAddConstraint}
+              label={constraintLabel}
+              defaultGeometry={room.constraints[0]?.geometry ?? DEFAULT_CONSTRAINT_RECT}
+              hasConstraint={room.constraints.length > 0}
+              onLabelChange={setConstraintLabel}
+              onSubmit={handleConstraintSubmit}
+            />
+          </div>
+
+          <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-1">
+            <IssuePanel issue={room.activeIssue} schedule={room.schedule} contracts={room.contracts} />
+            <OptionsPanel
+              phase={room.phase}
+              options={room.resolutionOptions}
+              selectedOptionId={room.selectedOptionId}
+              previewOptionId={previewedOption?.id ?? null}
+              hasConstraint={room.constraints.length > 0}
+              onPreview={room.previewOption}
+              onRevise={room.reviseOption}
+              onSelect={room.selectOption}
+            />
+            <ImpactPanel
+              project={room.project}
+              selectedOption={room.resolutionOptions.find(
+                (option) => option.id === room.selectedOptionId,
+              ) ?? null}
+            />
+            <ActivityTimeline events={room.activityLog} />
+          </div>
+        </section>
+      </div>
+    </main>
+  )
+}
