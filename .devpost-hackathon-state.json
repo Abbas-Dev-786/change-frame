@@ -1,0 +1,40 @@
+{
+  "plugin": "devpost-hackathon",
+  "version": 2,
+  "hackathon": {
+    "slug": "webmcp",
+    "name": "The WebMCP Challenge",
+    "url": "https://webmcp.devpost.com",
+    "selected": true,
+    "source": "search"
+  },
+  "participant": {
+    "name": "",
+    "display_name": "Abbas Bhanpura Wala"
+  },
+  "project": {
+    "name": "",
+    "summary": "",
+    "ai_usage": "",
+    "codex_usage": ""
+  },
+  "current_stage": "resources",
+  "completed_stages": [
+    "start-hackathon",
+    "review",
+    "resources"
+  ],
+  "rules_acknowledged": true,
+  "learning": {
+    "status": "active",
+    "current_step": "onboard",
+    "completed_steps": [],
+    "plan_file": "",
+    "checklist_file": ""
+  },
+  "submission": {
+    "draft_file": "devpost-submission.md",
+    "status": "not-started"
+  },
+  "next_command": "build-scope"
+}
