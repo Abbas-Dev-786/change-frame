@@ -29,10 +29,13 @@ it("materializes options and creates a keyboard coordinate constraint", () => {
   render(<App />)
 
   fireEvent.click(screen.getByRole("button", { name: /evaluate options/i }))
-  fireEvent.click(screen.getByRole("button", { name: /create constraint-12/i }))
+  fireEvent.click(screen.getByRole("button", { name: /create field constraint/i }))
 
   expect(screen.getByText("Options available")).toBeVisible()
   expect(screen.getByText("OPTION-A - Reroute through Corridor C")).toBeVisible()
+  expect(screen.getByText("Option Comparison")).toBeVisible()
+  expect(screen.getByText("Decision note")).toBeVisible()
+  expect(screen.getByText("Lowest direct cost, but the high constructability risk weakens confidence.")).toBeVisible()
   expect(screen.getByText("Constraint added")).toBeVisible()
 })
 
@@ -40,8 +43,12 @@ it("keeps approval human-only and renders the final draft change order", () => {
   render(<App />)
 
   fireEvent.click(screen.getByRole("button", { name: /evaluate options/i }))
-  fireEvent.click(screen.getByRole("button", { name: /create constraint-12/i }))
+  fireEvent.click(screen.getByRole("button", { name: /create field constraint/i }))
   fireEvent.click(screen.getAllByRole("button", { name: /^Revise$/i })[0])
+
+  expect(screen.getByText("Avoids CONSTRAINT-12")).toBeVisible()
+  expect(screen.getByText("Balances constructability, cost, and milestone protection after the field constraint.")).toBeVisible()
+
   fireEvent.click(screen.getAllByRole("button", { name: /^Select$/i })[0])
   fireEvent.click(screen.getByRole("button", { name: /simulate impact/i }))
   fireEvent.click(screen.getByRole("button", { name: /prepare decision/i }))
@@ -56,5 +63,5 @@ it("keeps approval human-only and renders the final draft change order", () => {
   expect(screen.getAllByText("Change order drafted")[0]).toBeVisible()
   expect(screen.getAllByText("CO-007")[0]).toBeVisible()
   expect(screen.getAllByText("+$6,500")[0]).toBeVisible()
-  expect(screen.getByText("MEP-04 — Summit Mechanical")).toBeVisible()
+  expect(screen.getByText("MEP-04 — Northline Mechanical")).toBeVisible()
 })

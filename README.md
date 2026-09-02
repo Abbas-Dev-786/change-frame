@@ -1,11 +1,11 @@
 # ChangeDecision OS
 
-ChangeDecision OS is a WebMCP-native construction decision workspace for resolving a synthetic HVAC duct and structural beam conflict at Riverside Office Tower.
+ChangeDecision OS is a WebMCP-native construction decision workspace for resolving an HVAC duct and structural beam conflict at Riverside Office Tower.
 
 The current build implements the full local MVP through Phase 12 readiness:
 
 - versioned central decision state and deterministic state-machine actions
-- decision-room UI with issue, plan, options, impact, and activity panels
+- decision-room UI with issue, plan, options, comparison, impact, and activity panels
 - human-created blocked-region constraints by pointer or coordinate fields
 - predefined resolution routes, Corridor C East revision logic, and geometry tests
 - production WebMCP read and mutation tools through `draft_change_order`

@@ -40,7 +40,7 @@ Expected:
 Human setup:
 
 1. Evaluate options.
-2. Create or replace the single MVP constraint as `CONSTRAINT-12`.
+2. Create or replace the single field constraint as `CONSTRAINT-12`.
 
 Prompt:
 

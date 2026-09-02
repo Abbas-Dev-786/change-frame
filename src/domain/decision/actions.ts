@@ -573,9 +573,9 @@ export function resetDecisionRoom(
       ...initialState,
       stateVersion: initialState.stateVersion + 1,
     },
-    "demo_reset",
-    "Demo reset",
-    "Returned to canonical ISS-019 investigation state.",
+    "workflow_reset",
+    "Workflow reset",
+    "Returned to the active ISS-019 investigation state.",
     now,
   )
 }

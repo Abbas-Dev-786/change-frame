@@ -82,3 +82,9 @@
 - Expanded domain, UI, and WebMCP registry tests through the post-approval `draft_change_order` path.
 - Added `docs/EVALS.md`, `docs/SUBMISSION.md`, and `LICENSE` for local submission readiness.
 - Local deployment, public repository publication, narrated video, deployed five-run hero journey, and Devpost submission remain manual owner actions.
+
+## 2026-09-02 — Future-scope comparison view promoted
+
+- Promoted the dedicated option comparison view from future scope into the active product UI.
+- Added a read-only comparison panel for cost, schedule, risk, constraint status, and decision notes.
+- Kept the WebMCP tool surface unchanged so the agent flow, human-only selection, and human-only approval boundaries remain intact.

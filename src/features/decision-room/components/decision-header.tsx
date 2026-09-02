@@ -58,7 +58,7 @@ export function DecisionHeader({
             onClick={onReset}
           >
             <RotateCcw aria-hidden="true" />
-            Reset demo
+            Reset workflow
           </Button>
           <Button
             type="button"

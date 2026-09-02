@@ -14,12 +14,14 @@ import {
   formatScheduleImpact,
   formatSignedCurrency,
   type ChangeOrder,
+  type Contract,
   type Decision,
   type Project,
 } from "@/src/domain/decision"
 
 type ChangeOrderPanelProps = {
   project: Project
+  contracts: Contract[]
   changeOrder: ChangeOrder | null
   decision: Decision | null
   canDraft: boolean
@@ -28,11 +30,14 @@ type ChangeOrderPanelProps = {
 
 export function ChangeOrderPanel({
   project,
+  contracts,
   changeOrder,
   decision,
   canDraft,
   onDraft,
 }: ChangeOrderPanelProps) {
+  const affectedContract = formatAffectedContract(contracts)
+
   if (!changeOrder) {
     return (
       <Card className="rounded-lg border-border/70 bg-card py-4 shadow-sm">
@@ -52,7 +57,7 @@ export function ChangeOrderPanel({
             <EmptyHeader>
               <EmptyTitle>No draft yet</EmptyTitle>
               <EmptyDescription>
-                After DEC-019 is approved by the human project manager, WebMCP can create the draft change order.
+                After DEC-019 is approved by the project manager, the workspace can generate the draft change order.
               </EmptyDescription>
             </EmptyHeader>
             <Button
@@ -106,12 +111,22 @@ export function ChangeOrderPanel({
             <ArtifactRow label="Scope" value={changeOrder.scope} />
             <ArtifactRow label="Cost impact" value={formatSignedCurrency(changeOrder.costImpact)} />
             <ArtifactRow label="Schedule impact" value={formatScheduleImpact(changeOrder.scheduleImpactDays)} />
-            <ArtifactRow label="Affected contract" value="MEP-04 — Summit Mechanical" />
+            <ArtifactRow label="Affected contract" value={affectedContract} />
           </dl>
         </section>
       </CardContent>
     </Card>
   )
+}
+
+function formatAffectedContract(contracts: Contract[]): string {
+  const contract = contracts.find((candidate) => candidate.id === "MEP-04")
+
+  if (!contract) {
+    return "MEP-04"
+  }
+
+  return `${contract.id} — ${contract.contractor}`
 }
 
 function ArtifactRow({ label, value }: { label: string; value: string }) {

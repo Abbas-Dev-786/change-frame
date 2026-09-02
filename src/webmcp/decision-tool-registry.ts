@@ -84,7 +84,7 @@ function reconcileDecisionTools(): void {
     setRegistryStatus({
       available: false,
       registeredTools: [],
-      error: "WebMCP unavailable in this browser.",
+      error: "Agent workspace tools are unavailable in this browser.",
     })
     notifySubscribers()
     return

@@ -12,7 +12,7 @@ export function WebMcpStatusPanel({ status }: WebMcpStatusPanelProps) {
   return (
     <Alert className="rounded-lg border-border/70 bg-card">
       <PlugZap aria-hidden="true" className="size-4" />
-      <AlertTitle>{status.available ? "WebMCP tools active" : "WebMCP unavailable"}</AlertTitle>
+      <AlertTitle>{status.available ? "Agent workspace connected" : "Agent workspace unavailable"}</AlertTitle>
       <AlertDescription className="mt-2 flex flex-wrap gap-2">
         {status.available ? (
           status.registeredTools.map((tool) => (
@@ -21,7 +21,7 @@ export function WebMcpStatusPanel({ status }: WebMcpStatusPanelProps) {
             </Badge>
           ))
         ) : (
-          <span>{status.error ?? "The human interface remains available."}</span>
+          <span>{status.error ?? "The project workspace remains available."}</span>
         )}
       </AlertDescription>
     </Alert>

@@ -42,7 +42,7 @@ export type ActivityEventType =
   | "decision_prepared"
   | "human_approved_decision"
   | "change_order_drafted"
-  | "demo_reset"
+  | "workflow_reset"
 
 export type ToolErrorCode =
   | "INVALID_STATE"

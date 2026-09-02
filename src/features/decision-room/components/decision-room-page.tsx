@@ -10,6 +10,7 @@ import { DecisionPanel } from "./decision-panel"
 import { DecisionHeader } from "./decision-header"
 import { ErrorAlert } from "./error-alert"
 import { ImpactPanel } from "./impact-panel"
+import { OptionComparisonPanel } from "./option-comparison-panel"
 import { IssuePanel } from "./issue-panel"
 import { OptionsPanel } from "./options-panel"
 import { PlanBoard } from "./plan-board"
@@ -25,7 +26,7 @@ export function DecisionRoomPage() {
   function handleConstraintSubmit(geometry: Rect) {
     if (room.constraints.length > 0) {
       const confirmed = window.confirm(
-        "Replace the existing MVP constraint CONSTRAINT-12?",
+        "Replace the existing field constraint CONSTRAINT-12?",
       )
 
       if (!confirmed) {
@@ -50,7 +51,7 @@ export function DecisionRoomPage() {
           projectName={room.project.name}
           canEvaluate={room.phase === "INVESTIGATING"}
           onEvaluate={room.evaluateOptions}
-          onReset={room.resetDemo}
+          onReset={room.resetWorkflow}
         />
 
         <section className="grid gap-4 xl:grid-cols-[minmax(620px,1.35fr)_minmax(420px,0.9fr)]">
@@ -89,6 +90,11 @@ export function DecisionRoomPage() {
               onRevise={room.reviseOption}
               onSelect={room.selectOption}
             />
+            <OptionComparisonPanel
+              options={room.resolutionOptions}
+              selectedOptionId={room.selectedOptionId}
+              onPreview={room.previewOption}
+            />
             <ImpactPanel
               project={room.project}
               selectedOption={room.resolutionOptions.find(
@@ -106,6 +112,7 @@ export function DecisionRoomPage() {
             />
             <ChangeOrderPanel
               project={room.project}
+              contracts={room.contracts}
               changeOrder={room.changeOrder}
               decision={room.decision}
               canDraft={room.phase === "APPROVED"}

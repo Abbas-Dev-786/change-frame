@@ -547,7 +547,7 @@ The MVP supports one active human blocked-region constraint. Its identity is sta
 
 This stable identity keeps the `revise_resolution_option.constraintIds` enum valid for the full MVP lifecycle. Deletion, multiple simultaneous constraints, and route locking are deferred to `FUTURE_SCOPE.md`.
 
-Constraint creation and replacement controls are enabled only in `OPTIONS_AVAILABLE`. They become read-only in `OPTION_SELECTED`, `IMPACT_SIMULATED`, `READY_FOR_APPROVAL`, `APPROVED`, and `CHANGE_ORDER_DRAFTED`. The MVP does not implement **Reopen alternatives**; the user must use **Reset demo** to change constraint geometry after selecting an option. The domain action still implements defensive rollback if invoked unexpectedly from any pre-approval phase.
+Constraint creation and replacement controls are enabled only in `OPTIONS_AVAILABLE`. They become read-only in `OPTION_SELECTED`, `IMPACT_SIMULATED`, `READY_FOR_APPROVAL`, `APPROVED`, and `CHANGE_ORDER_DRAFTED`. The MVP does not implement **Reopen alternatives**; the user must use **Reset workflow** to change constraint geometry after selecting an option. The domain action still implements defensive rollback if invoked unexpectedly from any pre-approval phase.
 
 ---
 
@@ -1120,7 +1120,7 @@ Rollback transitions are deterministic:
 | Select an option | `OPTIONS_AVAILABLE` | `OPTION_SELECTED` | Human UI only |
 | Change selected option | `OPTION_SELECTED` | `OPTION_SELECTED` | Human UI only |
 | Change selected option | `IMPACT_SIMULATED` | `OPTION_SELECTED` | Human UI only |
-| Reset demo | Any phase | `INVESTIGATING` | Human UI only |
+| Reset workflow | Any phase | `INVESTIGATING` | Human UI only |
 
 Constraint editing is deliberately unavailable through the UI after `OPTIONS_AVAILABLE`. Selection editing is unavailable from `READY_FOR_APPROVAL` onward. After `APPROVED`, every constraint, option, simulation, decision, and change-order edit is forbidden except full reset.
 
@@ -1129,7 +1129,7 @@ Invalidation rules:
 - Adding or replacing a constraint before approval clears selection, simulation, mitigation, and prepared decision; generated options remain but affected options are marked `needs_revision`; phase becomes `OPTIONS_AVAILABLE`.
 - Revising an option clears any selection, simulation, mitigation, and prepared decision derived from that option; phase becomes `OPTIONS_AVAILABLE`.
 - Changing the selected option clears simulation, mitigation, and prepared decision; phase becomes or remains `OPTION_SELECTED`.
-- Constraints and option selection become read-only after approval. The user must use **Reset demo** to begin another run.
+- Constraints and option selection become read-only after approval. The user must use **Reset workflow** to begin another run.
 - Every state-changing mutation increments `stateVersion`; duplicate-safe semantic no-ops do not.
 
 The UI and tool registry must reflect a phase transition before the next agent observation. `toolchange` is expected whenever the available tool set changes.
@@ -1450,7 +1450,7 @@ Persistence semantics are explicit:
 - valid state is saved to versioned `sessionStorage`
 - page reload restores the current demo phase in the same tab
 - missing, invalid, or incompatible saved state loads the canonical initial fixture
-- **Reset demo** clears saved state, unregisters phase tools, and restores `INVESTIGATING`
+- **Reset workflow** clears saved state, unregisters phase tools, and restores `INVESTIGATING`
 - browser close may discard the session; cross-device persistence is out of scope
 
 ---
@@ -1573,7 +1573,7 @@ The product is not submission-ready unless every P0 criterion passes.
 | P0.12 | Human approval | The approval control is enabled only in `READY_FOR_APPROVAL`; a human click records approval and exposes `draft_change_order`. |
 | P0.13 | Change-order draft | After approval, `draft_change_order` upserts `CO-007` and renders an HTML draft with the approved scope, `$6,500`, `0 days`, and `DEC-019`. |
 | P0.14 | Coherence, concurrency, and retry safety | A mutation resolves only after domain state, visible UI, and registry agree. Stale replays return `STATE_CONFLICT` with zero side effects; valid current-state re-executions and upserts create no duplicates. |
-| P0.15 | Reload and reset | Reload restores valid same-tab session state. **Reset demo** clears it and returns to the canonical `INVESTIGATING` state with the correct tool registry. |
+| P0.15 | Reload and reset | Reload restores valid same-tab session state. **Reset workflow** clears it and returns to the canonical `INVESTIGATING` state with the correct tool registry. |
 | P0.16 | Accessibility | The complete human path is keyboard operable, has visible focus, text labels for status, accessible plan equivalents, and no color-only meaning. |
 | P0.17 | Supported deployment | The public HTTPS URL completes five consecutive hero runs in ChatGPT's in-app browser; Chrome with WebMCP enabled is also smoke-tested when available. |
 | P0.18 | Submission package | Public repository, detectable open-source license, setup/testing instructions, public narrated YouTube video under three minutes, and final Devpost submission are complete. |

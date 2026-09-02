@@ -33,7 +33,7 @@ type DecisionRoomActions = {
   approveDecision: () => void
   draftChangeOrder: () => void
   previewOption: (optionId: OptionId | null) => void
-  resetDemo: () => void
+  resetWorkflow: () => void
 }
 
 export type DecisionRoomStore = DecisionRoomState & DecisionRoomActions
@@ -109,7 +109,7 @@ export const useDecisionRoomStore = create<DecisionRoomStore>((set, get) => ({
 
     commitDecisionRoomState(set, nextState)
   },
-  resetDemo: () => {
+  resetWorkflow: () => {
     clearSavedState()
     commitDecisionRoomState(
       set,

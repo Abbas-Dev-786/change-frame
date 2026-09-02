@@ -50,7 +50,7 @@ export function ConstraintControls({
       <CardHeader className="gap-1 px-4">
         <div className="flex items-center gap-2">
           <SquareDashedMousePointer aria-hidden="true" className="size-4 text-primary" />
-          <CardTitle className="text-base">Human Constraint</CardTitle>
+          <CardTitle className="text-base">Field Constraint</CardTitle>
         </div>
       </CardHeader>
       <CardContent className="grid gap-4 px-4">
@@ -79,7 +79,7 @@ export function ConstraintControls({
           onClick={() => onSubmit(geometry)}
         >
           <Keyboard aria-hidden="true" />
-          {hasConstraint ? "Replace CONSTRAINT-12" : "Create CONSTRAINT-12"}
+          {hasConstraint ? "Replace field constraint" : "Create field constraint"}
         </Button>
       </CardContent>
     </Card>

@@ -22,7 +22,17 @@ The default decision is to keep a capability in this file.
 
 ---
 
-# 2. Future WebMCP Tool Registry
+# 2. Moved Into Active Product
+
+The following future-scope items have been intentionally pulled into the working product after the full local MVP gate passed:
+
+| Capability | Shipped as | Boundary |
+|---|---|---|
+| Dedicated option comparison view | Read-only UI comparison panel for cost, schedule, risk, constraint status, and decision notes | No new WebMCP tool; selection and approval remain human-controlled. |
+
+---
+
+# 3. Future WebMCP Tool Registry
 
 These are candidates, not commitments. Names may change when their user goal and contract are designed.
 
@@ -34,7 +44,7 @@ These are candidates, not commitments. Names may change when their user goal and
 | `get_project_context` | Retrieve broader budget, contract, drawing, and schedule context | Granular context adds tool-selection ambiguity in the single-project MVP. |
 | `get_project_constraints` | Retrieve baseline constraints separately from human annotations | Consolidated context is simpler and more reliable for the demo. |
 | `get_resolution_options` | Read all generated options without recalculating them | The MVP can return options through context and generation results. |
-| `compare_resolution_options` | Produce a ranked side-by-side comparison with explicit trade-offs | A dedicated comparison experience is not required for the hero decision. |
+| `compare_resolution_options` | Produce a ranked side-by-side comparison with explicit trade-offs | The active product now has a read-only UI comparison panel; a separate tool would add overlap unless a distinct agent-only goal is specified. |
 | `simulate_cost_impact` | Inspect labor, material, equipment, and subcontract cost details independently | Combined project impact is sufficient for the MVP. |
 | `simulate_schedule_impact` | Inspect activity dependencies, float, and milestone effects independently | Combined project impact is sufficient for the MVP. |
 | `simulate_schedule_mitigation` | Compare multiple acceleration or resequencing mitigations | The MVP supports one deterministic additional-crew mitigation. |
@@ -67,7 +77,7 @@ These are candidates, not commitments. Names may change when their user goal and
 
 ---
 
-# 3. Actions That Must Remain Human-Only
+# 4. Actions That Must Remain Human-Only
 
 The following are intentionally **not** future WebMCP tools:
 
@@ -84,7 +94,7 @@ Agents may prepare the information surrounding these actions, but authority rema
 
 ---
 
-# 4. Future Product Capabilities
+# 5. Future Product Capabilities
 
 ## Plan and Drawing Experience
 
@@ -99,7 +109,6 @@ Agents may prepare the information surrounding these actions, but authority rema
 
 ## Decision Experience
 
-- dedicated option comparison view
 - option rejection reasons
 - explicit **Reopen alternatives** action after option selection
 - multiple mitigation strategies
@@ -129,7 +138,7 @@ Agents may prepare the information surrounding these actions, but authority rema
 
 ---
 
-# 5. Template for Adding a Future Tool
+# 6. Template for Adding a Future Tool
 
 Add future candidates using this structure:
 
