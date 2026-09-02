@@ -1,45 +1,45 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from "vitest"
+
+import {
+  PHASE_ZERO_TOOL_NAME,
+  type PhaseZeroToolInput,
+  type PhaseZeroToolResult,
+} from "../model/phase-zero"
+import type { ModelContextTool } from "./model-context"
 import {
   ensurePhaseZeroToolRegistered,
   getPhaseZeroSnapshot,
-  PHASE_ZERO_TOOL_NAME,
-  resetPhaseZeroForTests,
-} from './phaseZero'
+  resetPhaseZeroRegistryForTests,
+} from "./phase-zero-registry"
 
-type RegisteredTool = {
-  name: string
-  description: string
-  inputSchema: Record<string, unknown>
-  annotations?: Record<string, boolean>
-  execute: (
-    input: Record<string, never>,
-    options: { signal: AbortSignal },
-  ) => Promise<unknown>
-}
+type RegisteredTool = ModelContextTool<
+  PhaseZeroToolInput,
+  PhaseZeroToolResult
+>
 
-function setModelContext(value?: object) {
-  Object.defineProperty(document, 'modelContext', {
+function setModelContext(value?: object): void {
+  Object.defineProperty(document, "modelContext", {
     configurable: true,
     value,
   })
 }
 
 afterEach(() => {
-  resetPhaseZeroForTests()
+  resetPhaseZeroRegistryForTests()
   setModelContext(undefined)
 })
 
-describe('Phase 0 WebMCP adapter', () => {
-  it('reports unsupported browsers without throwing', async () => {
+describe("Phase 0 WebMCP registry", () => {
+  it("reports unsupported browsers without throwing", async () => {
     setModelContext(undefined)
 
     await expect(ensurePhaseZeroToolRegistered()).resolves.toBeUndefined()
 
-    expect(getPhaseZeroSnapshot().status).toBe('unsupported')
+    expect(getPhaseZeroSnapshot().status).toBe("unsupported")
     expect(getPhaseZeroSnapshot().modelContextAvailable).toBe(false)
   })
 
-  it('registers one read-only tool and returns the readiness payload', async () => {
+  it("registers one read-only tool and returns the readiness payload", async () => {
     let registeredTool: RegisteredTool | undefined
     const registerTool = vi.fn(async (tool: RegisteredTool) => {
       registeredTool = tool
@@ -56,30 +56,27 @@ describe('Phase 0 WebMCP adapter', () => {
       untrustedContentHint: false,
     })
     expect(registeredTool?.inputSchema).toMatchObject({
-      type: 'object',
+      type: "object",
       additionalProperties: false,
     })
 
-    const result = await registeredTool?.execute(
-      {},
-      { signal: new AbortController().signal },
-    )
+    const result = await registeredTool?.execute({})
 
     expect(result).toMatchObject({
       success: true,
       data: {
-        application: 'ChangeDecision OS',
-        phase: 'PHASE_0',
-        status: 'ready',
+        application: "ChangeDecision OS",
+        phase: "PHASE_0",
+        status: "ready",
       },
     })
     expect(getPhaseZeroSnapshot()).toMatchObject({
-      status: 'registered',
+      status: "registered",
       invocationCount: 1,
     })
   })
 
-  it('rejects an execution that was already cancelled', async () => {
+  it("rejects an execution that was already cancelled", async () => {
     let registeredTool: RegisteredTool | undefined
     setModelContext({
       registerTool: async (tool: RegisteredTool) => {
@@ -92,27 +89,27 @@ describe('Phase 0 WebMCP adapter', () => {
 
     await expect(
       registeredTool?.execute({}, { signal: controller.signal }),
-    ).rejects.toMatchObject({ name: 'AbortError' })
+    ).rejects.toMatchObject({ name: "AbortError" })
     expect(getPhaseZeroSnapshot().invocationCount).toBe(0)
   })
 
-  it('allows registration to be retried after a browser API failure', async () => {
+  it("allows registration to be retried after a browser API failure", async () => {
     const registerTool = vi
       .fn()
-      .mockRejectedValueOnce(new Error('Temporary registration failure.'))
+      .mockRejectedValueOnce(new Error("Temporary registration failure."))
       .mockResolvedValueOnce(undefined)
     setModelContext({ registerTool })
 
     await ensurePhaseZeroToolRegistered()
     expect(getPhaseZeroSnapshot()).toMatchObject({
-      status: 'error',
-      error: 'Temporary registration failure.',
+      status: "error",
+      error: "Temporary registration failure.",
     })
 
     await ensurePhaseZeroToolRegistered()
     expect(registerTool).toHaveBeenCalledTimes(2)
     expect(getPhaseZeroSnapshot()).toMatchObject({
-      status: 'registered',
+      status: "registered",
       error: null,
     })
   })

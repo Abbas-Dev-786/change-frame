@@ -1,18 +1,19 @@
-import { render, screen, waitFor } from '@testing-library/react'
-import { afterEach, expect, it } from 'vitest'
-import { App } from './App'
-import { resetPhaseZeroForTests } from './webmcp/phaseZero'
+import { render, screen, waitFor } from "@testing-library/react"
+import { afterEach, expect, it } from "vitest"
+
+import { App } from "./App"
+import { resetPhaseZeroRegistryForTests } from "./features/phase-zero/webmcp/phase-zero-registry"
 
 afterEach(() => {
-  resetPhaseZeroForTests()
-  Object.defineProperty(document, 'modelContext', {
+  resetPhaseZeroRegistryForTests()
+  Object.defineProperty(document, "modelContext", {
     configurable: true,
     value: undefined,
   })
 })
 
-it('keeps the human-facing spike usable when WebMCP is unavailable', async () => {
-  Object.defineProperty(document, 'modelContext', {
+it("keeps the human-facing spike usable when WebMCP is unavailable", async () => {
+  Object.defineProperty(document, "modelContext", {
     configurable: true,
     value: undefined,
   })
@@ -21,10 +22,10 @@ it('keeps the human-facing spike usable when WebMCP is unavailable', async () =>
 
   expect(
     screen.getByRole('heading', {
-      name: 'Prove the browser connection before building the product.',
+      name: "Prove the browser connection before building the product.",
     }),
   ).toBeVisible()
   await waitFor(() => {
-    expect(screen.getByText('WebMCP unavailable')).toBeVisible()
+    expect(screen.getByText("WebMCP unavailable")).toBeVisible()
   })
 })

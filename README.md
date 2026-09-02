@@ -2,6 +2,8 @@
 
 Phase 0 is a disposable WebMCP compatibility spike for the ChangeDecision OS hackathon MVP. It proves that a deployed React page can register one read-only imperative WebMCP tool and visibly confirm invocation before the product workflow is built.
 
+The interface uses Tailwind CSS and shared shadcn/ui primitives. Product code follows a feature-oriented modular architecture documented in [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md); explicit `any` types are prohibited by a repository quality gate.
+
 ## Local development
 
 ```bash
@@ -21,10 +23,10 @@ Permissions-Policy: tools=(self)
 Run the local quality gate:
 
 ```bash
-npm run typecheck
-npm test
-npm run build
+npm run verify
 ```
+
+This checks the no-`any` rule, TypeScript, tests, and the production build.
 
 After deploying the repository, open the HTTPS URL in either:
 

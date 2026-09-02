@@ -1420,6 +1420,8 @@ Locked MVP stack:
 React
 TypeScript
 Vite
+Tailwind CSS
+shadcn/ui shared component primitives
 SVG plan renderer
 Zustand
 WebMCP imperative API
@@ -1433,14 +1435,15 @@ The MVP has no backend, authentication, external construction API, or LLM call o
 Module boundaries:
 
 ```text
-domain/       entities, state machine, calculations, invalidation rules
-store/        central state and domain action dispatch
-webmcp/       schemas, registration lifecycle, response envelopes
-components/   Decision Room human interface
-data/         immutable synthetic project fixture
+features/      vertical product slices and feature-owned contracts
+domain/        shared entities, state machine, calculations, invalidation rules
+store/         central state and domain action dispatch
+webmcp/        schemas, registration lifecycle, response envelopes
+components/    feature UI plus shared shadcn primitives in components/ui
+data/          immutable synthetic project fixture
 ```
 
-The domain layer must not import React, Zustand, or WebMCP types. UI handlers and WebMCP tools both invoke the same domain actions.
+The domain layer must not import React, Zustand, WebMCP types, Tailwind, or shadcn. UI handlers and WebMCP tools both invoke the same domain actions. Feature components may compose shadcn primitives and Tailwind utility classes, but shared primitives must not contain product policy. Explicit `any` types are prohibited in application and shared component code.
 
 Persistence semantics are explicit:
 

@@ -47,3 +47,11 @@
 - Added focused tests for unsupported browsers, singleton registration, invocation output, cancellation, failed-registration retry, and the human fallback UI.
 - Local gates passed: TypeScript, Vitest, production build, dependency audit, and an HTTP response-header check.
 - Live browser-agent discovery remains the external Phase 0 gate and must be performed after the participant deploys the site.
+
+## 2026-09-02 — Tailwind, shadcn, and modular architecture pass
+
+- Adopted the participant's explicit implementation constraints: Tailwind CSS for styling, shadcn/ui for shared primitives, feature-oriented modules, and no explicit `any` types.
+- Split Phase 0 into model, WebMCP adapter, React hook, and focused presentation components; `App.tsx` is now only the composition root.
+- Added a Vite alias for the existing shadcn `@/` imports, architecture documentation, and a `check:no-any` repository gate included in `npm run verify`.
+- Rebuilt the spike interface from Tailwind utilities and shadcn primitives while preserving the WebMCP lifecycle and human-readable diagnostics.
+- Local browser verification discovered the registered tool and exposed a compatibility edge where a browser agent may omit the execution-options argument; the adapter now accepts that optional argument while retaining abort handling when a signal is supplied.
