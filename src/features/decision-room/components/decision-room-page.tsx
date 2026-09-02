@@ -88,6 +88,7 @@ export function DecisionRoomPage() {
               hasConstraint={room.constraints.length > 0}
               onPreview={room.previewOption}
               onRevise={room.reviseOption}
+              onReject={room.rejectOption}
               onSelect={room.selectOption}
             />
             <OptionComparisonPanel

@@ -29,13 +29,18 @@ it("materializes options and creates a keyboard coordinate constraint", () => {
   render(<App />)
 
   fireEvent.click(screen.getByRole("button", { name: /evaluate options/i }))
+  fireEvent.change(screen.getByLabelText("Rejection reason for OPTION-B"), {
+    target: { value: "requires_engineering_review" },
+  })
+  fireEvent.click(screen.getAllByRole("button", { name: /reject option/i })[1])
   fireEvent.click(screen.getByRole("button", { name: /create field constraint/i }))
 
   expect(screen.getByText("Options available")).toBeVisible()
   expect(screen.getByText("OPTION-A - Reroute through Corridor C")).toBeVisible()
   expect(screen.getByText("Option Comparison")).toBeVisible()
   expect(screen.getByText("Decision note")).toBeVisible()
-  expect(screen.getByText("Lowest direct cost, but the high constructability risk weakens confidence.")).toBeVisible()
+  expect(screen.getByText("Rejection reason: Requires engineering review")).toBeVisible()
+  expect(screen.getByText("Rejected by reviewer: requires engineering review.")).toBeVisible()
   expect(screen.getByText("Constraint added")).toBeVisible()
 })
 
@@ -64,4 +69,24 @@ it("keeps approval human-only and renders the final draft change order", () => {
   expect(screen.getAllByText("CO-007")[0]).toBeVisible()
   expect(screen.getAllByText("+$6,500")[0]).toBeVisible()
   expect(screen.getByText("MEP-04 — Northline Mechanical")).toBeVisible()
+})
+
+it("renders hostile constraint labels as text and keeps keyboard preview transient", () => {
+  render(<App />)
+
+  fireEvent.click(screen.getByRole("button", { name: /evaluate options/i }))
+  const beforePreviewVersion = useDecisionRoomStore.getState().stateVersion
+  fireEvent.focus(screen.getByText("OPTION-B - Resize duct section").closest("[tabindex]")!)
+
+  expect(useDecisionRoomStore.getState().previewOptionId).toBe("OPTION-B")
+  expect(useDecisionRoomStore.getState().selectedOptionId).toBeNull()
+  expect(useDecisionRoomStore.getState().stateVersion).toBe(beforePreviewVersion)
+
+  const hostileLabel = '<img src=x onerror="window.compromised=true">'
+  fireEvent.change(screen.getByLabelText("Label"), { target: { value: hostileLabel } })
+  fireEvent.click(screen.getByRole("button", { name: /create field constraint/i }))
+
+  expect(useDecisionRoomStore.getState().constraints[0]?.label).toBe(hostileLabel)
+  expect(document.querySelector("img")).toBeNull()
+  expect(screen.getAllByText(hostileLabel).length).toBeGreaterThan(0)
 })

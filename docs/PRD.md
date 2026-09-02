@@ -744,7 +744,7 @@ document.modelContext.registerTool(...)
 
 The application must detect this capability before registration. If it is unavailable, the human interface remains usable and displays a clear “WebMCP unavailable in this browser” notice with testing guidance. The app must never crash solely because `document.modelContext` is missing.
 
-Each workflow phase owns an `AbortController` for its registered tools. A state-changing tool follows this order:
+Each registered tool is owned by an `AbortController`. Registration reconciliation is serialized so rapid state changes cannot leave stale or duplicate registrations. A state-changing tool follows this order:
 
 1. validate the input, expected version, and phase preconditions
 2. execute one atomic domain transaction
@@ -755,7 +755,7 @@ Each workflow phase owns an `AbortController` for its registered tools. A state-
 
 **Coherence invariant:** A state-changing WebMCP tool does not resolve until domain state, visible UI state, and the exposed WebMCP tool set all represent the same resulting phase.
 
-The application must not abort a tool registration while that tool's execution is still applying state. Every tool execution must also accept the execution `signal` and stop optional long-running work when cancelled. Registry reconciliation may briefly register and remove tools internally, but the final set must match the phase table before the tool promise resolves.
+Obsolete tools are unregistered by aborting their registration signal; Chrome 153 and later preserve already in-flight executions while removing the tool from subsequent discovery. Every tool execution also accepts the independent execution `signal` and stops optional long-running work when cancelled. Registry reconciliation may briefly register and remove tools internally, but the final set must match the phase table before the tool promise resolves. Tool-set changes never require a document reload.
 
 Dynamic registration is used only when availability communicates a real domain precondition. `get_decision_context` and `get_user_constraints` remain available throughout the workflow; mutation tools appear only when valid.
 
@@ -1450,7 +1450,7 @@ Persistence semantics are explicit:
 - valid state is saved to versioned `sessionStorage`
 - page reload restores the current demo phase in the same tab
 - missing, invalid, or incompatible saved state loads the canonical initial fixture
-- **Reset workflow** clears saved state, unregisters phase tools, and restores `INVESTIGATING`
+- **Reset workflow** clears saved state, unregisters phase tools, restores `INVESTIGATING`, and assigns a state version greater than the pre-reset version
 - browser close may discard the session; cross-device persistence is out of scope
 
 ---

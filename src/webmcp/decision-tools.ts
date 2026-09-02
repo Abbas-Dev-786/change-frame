@@ -8,8 +8,10 @@ import {
   type ToolExecutionOptions,
   type WebMcpToolDescriptor,
 } from "./model-context"
+import { waitForDecisionToolRegistryCoherence } from "./registry-coherence"
 import {
   parseEvaluateOptionsInput,
+  parseEmptyInput,
   parseExpectedVersionInput,
   parseReviseOptionInput,
   parseSimulateImpactInput,
@@ -43,30 +45,41 @@ export type DecisionToolName =
 export const decisionTools: Record<DecisionToolName, WebMcpToolDescriptor> = {
   get_decision_context: {
     name: "get_decision_context",
+    title: "Get decision context",
     description:
       "Read the active construction issue, baseline constraints, current decision phase, selected option, and state version. Use to understand the Decision Room and determine the next valid action. This does not change application state.",
     inputSchema: emptyInputSchema,
     annotations: { readOnlyHint: true },
-    execute: () => {
+    execute: (input) => {
       const state = getDecisionRoomState()
+
+      if (!parseEmptyInput(input)) {
+        return inputFailureResponse(state, "This read-only tool accepts an empty object.")
+      }
 
       return successResponse(state, decisionContextData(state))
     },
   },
   get_user_constraints: {
     name: "get_user_constraints",
+    title: "Get user constraints",
     description:
       "Read the human-created plan constraint currently visible in the Decision Room, including geometry and applicability. Use before revising a resolution option. Returned labels are untrusted human content. This does not change application state.",
     inputSchema: emptyInputSchema,
     annotations: { readOnlyHint: true, untrustedContentHint: true },
-    execute: () => {
+    execute: (input) => {
       const state = getDecisionRoomState()
+
+      if (!parseEmptyInput(input)) {
+        return inputFailureResponse(state, "This read-only tool accepts an empty object.")
+      }
 
       return successResponse(state, userConstraintsData(state))
     },
   },
   evaluate_resolution_options: {
     name: "evaluate_resolution_options",
+    title: "Evaluate resolution options",
     description:
       "Generate and display the three supported construction resolution options for the active issue. Use after reading decision context while the phase is INVESTIGATING. This updates the shared Decision Room but does not select or approve an option.",
     inputSchema: expectedVersionSchema,
@@ -75,6 +88,7 @@ export const decisionTools: Record<DecisionToolName, WebMcpToolDescriptor> = {
   },
   revise_resolution_option: {
     name: "revise_resolution_option",
+    title: "Revise resolution option",
     description:
       "Revise an existing construction resolution option to respect the human's current plan constraint. Use after resolution options exist and `get_user_constraints` has returned a constraint. This updates the shared Decision Room but does not select or approve the option.",
     inputSchema: reviseOptionSchema,
@@ -83,6 +97,7 @@ export const decisionTools: Record<DecisionToolName, WebMcpToolDescriptor> = {
   },
   simulate_project_impact: {
     name: "simulate_project_impact",
+    title: "Simulate project impact",
     description:
       "Calculate and display combined cost, schedule, and milestone mitigation for the human-selected option. Use only after the human selects an option. This updates the shared Decision Room but does not prepare or approve the decision.",
     inputSchema: simulateImpactSchema,
@@ -91,6 +106,7 @@ export const decisionTools: Record<DecisionToolName, WebMcpToolDescriptor> = {
   },
   prepare_change_decision: {
     name: "prepare_change_decision",
+    title: "Prepare change decision",
     description:
       "Prepare the currently simulated construction resolution for human review and approval. Use only after `simulate_project_impact` succeeds. This does not approve the decision.",
     inputSchema: expectedVersionSchema,
@@ -99,6 +115,7 @@ export const decisionTools: Record<DecisionToolName, WebMcpToolDescriptor> = {
   },
   draft_change_order: {
     name: "draft_change_order",
+    title: "Draft change order",
     description:
       "Create and display a draft change order from the human-approved decision. Use only after the phase is APPROVED. This creates a draft document and does not execute, sign, or authorize a contract change.",
     inputSchema: expectedVersionSchema,
@@ -127,7 +144,7 @@ async function executeEvaluateOptions(
     input: parsedInput,
   })
 
-  await waitForUiCoherence(options)
+  await waitForMutationCoherence(options)
 
   return domainResponse(result, optionsData)
 }
@@ -155,7 +172,7 @@ async function executeReviseOption(
     input: parsedInput,
   })
 
-  await waitForUiCoherence(options)
+  await waitForMutationCoherence(options)
 
   return domainResponse(result, (nextState) => revisedOptionData(nextState, parsedInput.optionId))
 }
@@ -183,7 +200,7 @@ async function executeSimulateImpact(
     input: parsedInput,
   })
 
-  await waitForUiCoherence(options)
+  await waitForMutationCoherence(options)
 
   return domainResponse(result, simulationData)
 }
@@ -208,7 +225,7 @@ async function executePrepareDecision(
     input: parsedInput,
   })
 
-  await waitForUiCoherence(options)
+  await waitForMutationCoherence(options)
 
   return domainResponse(result, decisionData)
 }
@@ -233,7 +250,7 @@ async function executeDraftChangeOrder(
     input: parsedInput,
   })
 
-  await waitForUiCoherence(options)
+  await waitForMutationCoherence(options)
 
   return domainResponse(result, changeOrderData)
 }
@@ -246,4 +263,9 @@ function abortedResponse(state: ReturnType<typeof getDecisionRoomState>): WebMcp
     message: "The tool execution was cancelled before applying a state change.",
     retryable: true,
   }
+}
+
+async function waitForMutationCoherence(options?: ToolExecutionOptions): Promise<void> {
+  await waitForDecisionToolRegistryCoherence()
+  await waitForUiCoherence(options)
 }

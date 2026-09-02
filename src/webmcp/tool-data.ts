@@ -49,12 +49,44 @@ export function revisedOptionData(state: DecisionRoomState, optionId: OptionId):
 }
 
 export function simulationData(state: DecisionRoomState): Record<string, unknown> {
-  return state.impactSimulation ? state.impactSimulation : {}
+  const simulation = state.impactSimulation
+
+  if (!simulation) {
+    return {}
+  }
+
+  return {
+    id: simulation.id,
+    optionId: simulation.optionId,
+    optionRevision: simulation.optionRevision,
+    preserveInspectionMilestone: simulation.preserveInspectionMilestone,
+    baseChangeCost: simulation.baseChangeCost,
+    baseScheduleImpactDays: simulation.baseScheduleImpactDays,
+    mitigation: simulation.mitigation,
+    totalCostImpact: simulation.totalCostImpact,
+    finalScheduleImpactDays: simulation.finalScheduleImpactDays,
+    projectedBudget: simulation.projectedBudget,
+  }
 }
 
 export function decisionData(state: DecisionRoomState): Record<string, unknown> {
+  const decision = state.decision
+
   return {
-    decision: state.decision,
+    decision: decision
+      ? {
+          id: decision.id,
+          issueId: decision.issueId,
+          optionId: decision.optionId,
+          optionRevision: decision.optionRevision,
+          mitigationId: decision.mitigationId,
+          costImpact: decision.costImpact,
+          scheduleImpactDays: decision.scheduleImpactDays,
+          status: decision.status,
+          approvedAt: decision.approvedAt,
+          sourceStateVersion: decision.sourceStateVersion,
+        }
+      : null,
   }
 }
 
@@ -72,7 +104,7 @@ export function availableToolNames(state: DecisionRoomState): string[] {
     tools.push("evaluate_resolution_options")
   }
 
-  if (state.phase === "OPTIONS_AVAILABLE" && state.constraints.length > 0) {
+  if (state.phase === "OPTIONS_AVAILABLE" && state.constraints.length > 0 && canReviseConstrainedOption(state)) {
     tools.push("revise_resolution_option")
   }
 
@@ -91,6 +123,12 @@ export function availableToolNames(state: DecisionRoomState): string[] {
   return tools
 }
 
+function canReviseConstrainedOption(state: DecisionRoomState): boolean {
+  return state.resolutionOptions.some(
+    (option) => option.id === "OPTION-A" && option.status !== "rejected",
+  )
+}
+
 function optionSummary(option: ResolutionOption) {
   return {
     id: option.id,
@@ -101,6 +139,7 @@ function optionSummary(option: ResolutionOption) {
     risk: option.risk,
     constraintIds: option.constraintIds,
     status: option.status,
+    rejectionReason: option.rejectionReason,
     routeOverlay: option.routeOverlay,
   }
 }

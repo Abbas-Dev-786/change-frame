@@ -7,11 +7,13 @@ import {
   getDecisionToolRegistryStatus,
   resetDecisionToolRegistryForTests,
   startDecisionToolRegistry,
+  waitForDecisionToolRegistryCoherence,
 } from "./decision-tool-registry"
 
 type RegisteredTool = {
   descriptor: WebMcpToolDescriptor
   active: boolean
+  signal?: AbortSignal
 }
 
 const registeredTools = new Map<string, RegisteredTool>()
@@ -32,26 +34,29 @@ describe("decision WebMCP registry", () => {
     Object.defineProperty(document, "modelContext", {
       configurable: true,
       value: {
-        registerTool: (descriptor: WebMcpToolDescriptor) => {
+        registerTool: async (
+          descriptor: WebMcpToolDescriptor,
+          options?: { signal?: AbortSignal },
+        ) => {
           registeredTools.set(descriptor.name, {
             descriptor,
             active: true,
+            signal: options?.signal,
           })
 
-          return {
-            remove: () => {
-              const tool = registeredTools.get(descriptor.name)
+          options?.signal?.addEventListener("abort", () => {
+            const tool = registeredTools.get(descriptor.name)
 
-              if (tool) {
-                tool.active = false
-              }
-            },
-          }
+            if (tool) {
+              tool.active = false
+            }
+          }, { once: true })
         },
       },
     })
 
     startDecisionToolRegistry()
+    await waitForDecisionToolRegistryCoherence()
 
     expect(activeToolNames()).toEqual([
       "get_decision_context",
@@ -83,6 +88,7 @@ describe("decision WebMCP registry", () => {
       label: "Electrical riser",
       geometry: DEFAULT_CONSTRAINT_RECT,
     })
+    await waitForDecisionToolRegistryCoherence()
 
     expect(activeToolNames()).toEqual([
       "get_decision_context",
@@ -101,6 +107,7 @@ describe("decision WebMCP registry", () => {
     expect(reviseResult.success).toBe(true)
 
     useDecisionRoomStore.getState().selectOption("OPTION-A")
+    await waitForDecisionToolRegistryCoherence()
 
     expect(activeToolNames()).toEqual([
       "get_decision_context",
@@ -129,6 +136,7 @@ describe("decision WebMCP registry", () => {
     expect(registeredTools.has("approve_decision")).toBe(false)
 
     useDecisionRoomStore.getState().approveDecision()
+    await waitForDecisionToolRegistryCoherence()
 
     expect(activeToolNames()).toEqual([
       "get_decision_context",
@@ -167,6 +175,52 @@ describe("decision WebMCP registry", () => {
       expect(staleDraftReplay.error).toBe("STATE_CONFLICT")
       expect(useDecisionRoomStore.getState().changeOrder?.id).toBe("CO-007")
     }
+  })
+
+  it("owns registrations with AbortControllers and serializes rapid reconciliation", async () => {
+    Object.defineProperty(document, "modelContext", {
+      configurable: true,
+      value: {
+        registerTool: async (
+          descriptor: WebMcpToolDescriptor,
+          options?: { signal?: AbortSignal },
+        ) => {
+          await Promise.resolve()
+          registeredTools.set(descriptor.name, {
+            descriptor,
+            active: true,
+            signal: options?.signal,
+          })
+          options?.signal?.addEventListener("abort", () => {
+            const tool = registeredTools.get(descriptor.name)
+
+            if (tool) {
+              tool.active = false
+            }
+          }, { once: true })
+        },
+      },
+    })
+
+    startDecisionToolRegistry()
+    await waitForDecisionToolRegistryCoherence()
+
+    const evaluateRegistration = getRegisteredTool("evaluate_resolution_options")
+    expect(evaluateRegistration.signal).toBeInstanceOf(AbortSignal)
+
+    useDecisionRoomStore.getState().evaluateOptions()
+    useDecisionRoomStore.getState().upsertConstraint({
+      label: "Electrical riser",
+      geometry: DEFAULT_CONSTRAINT_RECT,
+    })
+    await waitForDecisionToolRegistryCoherence()
+
+    expect(evaluateRegistration.signal?.aborted).toBe(true)
+    expect(activeToolNames()).toEqual([
+      "get_decision_context",
+      "get_user_constraints",
+      "revise_resolution_option",
+    ])
   })
 })
 

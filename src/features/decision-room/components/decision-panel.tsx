@@ -36,7 +36,7 @@ export function DecisionPanel({
     <Card className="rounded-lg border-border/70 bg-card py-4 shadow-sm">
       <CardHeader className="gap-1 px-4">
         <div className="flex items-center justify-between gap-3">
-          <CardTitle className="text-base">Decision Summary</CardTitle>
+          <h2 className="text-base font-semibold">Decision Summary</h2>
           <Badge variant="outline" className="rounded-md">
             {decision?.id ?? "DEC-019"}
           </Badge>

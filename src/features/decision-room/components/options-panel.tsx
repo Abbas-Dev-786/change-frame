@@ -1,13 +1,18 @@
+import { useState } from "react"
 import { CheckCircle2, GitBranch, WandSparkles } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import {
+  formatRejectionReason,
   formatScheduleImpact,
   formatSignedCurrency,
+  isOptionEligibleForSelection,
   type DecisionPhase,
   type OptionId,
+  type OptionRejectionReason,
   type ResolutionOption,
 } from "@/src/domain/decision"
 
@@ -19,6 +24,7 @@ type OptionsPanelProps = {
   hasConstraint: boolean
   onPreview: (optionId: OptionId | null) => void
   onRevise: (optionId: OptionId) => void
+  onReject: (optionId: OptionId, reason: OptionRejectionReason) => void
   onSelect: (optionId: OptionId) => void
 }
 
@@ -30,9 +36,11 @@ export function OptionsPanel({
   hasConstraint,
   onPreview,
   onRevise,
+  onReject,
   onSelect,
 }: OptionsPanelProps) {
   const selectionLocked = !["OPTIONS_AVAILABLE", "OPTION_SELECTED", "IMPACT_SIMULATED"].includes(phase)
+  const rejectionLocked = !["OPTIONS_AVAILABLE", "OPTION_SELECTED", "IMPACT_SIMULATED"].includes(phase)
 
   return (
     <section className="grid gap-3" aria-labelledby="resolution-options-title">
@@ -59,10 +67,12 @@ export function OptionsPanel({
             option={option}
             selected={option.id === selectedOptionId}
             previewed={option.id === previewOptionId}
-            canSelect={!selectionLocked}
-            canRevise={hasConstraint && option.id === "OPTION-A" && option.revision === 1}
+            canSelect={!selectionLocked && isOptionEligibleForSelection(option)}
+            canRevise={hasConstraint && option.strategy === "reroute" && option.status === "needs_revision"}
+            canReject={!rejectionLocked}
             onPreview={onPreview}
             onRevise={onRevise}
+            onReject={onReject}
             onSelect={onSelect}
           />
         ))
@@ -77,8 +87,10 @@ function OptionCard({
   previewed,
   canSelect,
   canRevise,
+  canReject,
   onPreview,
   onRevise,
+  onReject,
   onSelect,
 }: {
   option: ResolutionOption
@@ -86,10 +98,16 @@ function OptionCard({
   previewed: boolean
   canSelect: boolean
   canRevise: boolean
+  canReject: boolean
   onPreview: (optionId: OptionId | null) => void
   onRevise: (optionId: OptionId) => void
+  onReject: (optionId: OptionId, reason: OptionRejectionReason) => void
   onSelect: (optionId: OptionId) => void
 }) {
+  const [rejectionReason, setRejectionReason] = useState<OptionRejectionReason>(
+    option.rejectionReason ?? "too_risky",
+  )
+
   return (
     <Card
       tabIndex={0}
@@ -104,9 +122,9 @@ function OptionCard({
       <CardHeader className="gap-2 px-4">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <CardTitle className="text-sm font-semibold">
+            <h3 className="text-sm font-semibold">
               {option.id} - {option.title}
-            </CardTitle>
+            </h3>
             <p className="mt-1 text-sm leading-5 text-muted-foreground">{option.description}</p>
           </div>
           <StatusBadge option={option} selected={selected} />
@@ -140,7 +158,35 @@ function OptionCard({
             <WandSparkles aria-hidden="true" />
             Revise
           </Button>
+          <NativeSelect
+            size="sm"
+            aria-label={`Rejection reason for ${option.id}`}
+            value={rejectionReason}
+            disabled={!canReject}
+            onChange={(event) => setRejectionReason(readRejectionReason(event.currentTarget.value))}
+          >
+            {rejectionReasonOptions.map((reason) => (
+              <NativeSelectOption key={reason} value={reason}>
+                {formatRejectionReason(reason)}
+              </NativeSelectOption>
+            ))}
+          </NativeSelect>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="rounded-lg"
+            disabled={!canReject}
+            onClick={() => onReject(option.id, rejectionReason)}
+          >
+            {option.status === "rejected" ? "Update reason" : "Reject option"}
+          </Button>
         </div>
+        {option.rejectionReason ? (
+          <p className="text-sm text-muted-foreground">
+            Rejection reason: {formatRejectionReason(option.rejectionReason)}
+          </p>
+        ) : null}
       </CardContent>
     </Card>
   )
@@ -165,6 +211,10 @@ function StatusBadge({
     return <Badge variant="outline" className="rounded-md border-emerald-300 bg-emerald-50 text-emerald-800">Revised</Badge>
   }
 
+  if (option.status === "rejected") {
+    return <Badge variant="outline" className="rounded-md border-red-300 bg-red-50 text-red-800">Rejected</Badge>
+  }
+
   return <Badge variant="secondary" className="rounded-md">Rev {option.revision}</Badge>
 }
 
@@ -175,4 +225,18 @@ function Metric({ label, value }: { label: string; value: string }) {
       <div className="mt-1 font-medium capitalize">{value}</div>
     </div>
   )
+}
+
+const rejectionReasonOptions = [
+  "too_risky",
+  "too_expensive",
+  "schedule_exposure",
+  "violates_field_constraint",
+  "requires_engineering_review",
+] as const
+
+function readRejectionReason(value: string): OptionRejectionReason {
+  const matchingReason = rejectionReasonOptions.find((reason) => reason === value)
+
+  return matchingReason ?? "too_risky"
 }

@@ -6,6 +6,7 @@ import {
   draftChangeOrder,
   evaluateResolutionOptions,
   prepareChangeDecision,
+  rejectResolutionOption,
   resetDecisionRoom,
   reviseResolutionOption,
   selectResolutionOption,
@@ -17,16 +18,19 @@ import {
   type DomainResult,
   type ExpectedVersionInput,
   type OptionId,
+  type OptionRejectionReason,
   type RevisionInput,
   type SimulateImpactInput,
 } from "@/src/domain/decision"
 
-const STORAGE_KEY = "changedecision-os:decision-room:v1"
+const STORAGE_KEY = "changedecision-os:decision-room:v2"
+const STORAGE_SCHEMA_VERSION = 2
 
 type DecisionRoomActions = {
   evaluateOptions: () => void
   upsertConstraint: (draft: ConstraintDraft) => void
   reviseOption: (optionId: OptionId) => void
+  rejectOption: (optionId: OptionId, reason: OptionRejectionReason) => void
   selectOption: (optionId: OptionId) => void
   simulateImpact: (preserveInspectionMilestone: boolean) => void
   prepareDecision: () => void
@@ -69,6 +73,14 @@ export const useDecisionRoomStore = create<DecisionRoomStore>((set, get) => ({
 
     commitDecisionRoomState(set, result.state)
   },
+  rejectOption: (optionId, reason) => {
+    const result = rejectResolutionOption(readCurrentState(get()), {
+      optionId,
+      reason,
+    })
+
+    commitDecisionRoomState(set, result.state)
+  },
   selectOption: (optionId) => {
     const result = selectResolutionOption(readCurrentState(get()), optionId)
 
@@ -106,14 +118,16 @@ export const useDecisionRoomStore = create<DecisionRoomStore>((set, get) => ({
   },
   previewOption: (optionId) => {
     const nextState = setPreviewOption(readCurrentState(get()), optionId)
-
-    commitDecisionRoomState(set, nextState)
+    set({ previewOptionId: nextState.previewOptionId })
   },
   resetWorkflow: () => {
     clearSavedState()
     commitDecisionRoomState(
       set,
-      resetDecisionRoom(() => createInitialDecisionState(new Date().toISOString())),
+      resetDecisionRoom(
+        readCurrentState(get()),
+        () => createInitialDecisionState(new Date().toISOString()),
+      ),
     )
   },
 }))
@@ -199,23 +213,41 @@ function loadSavedState(): DecisionRoomState {
     return createInitialDecisionState()
   }
 
-  const savedValue = window.sessionStorage.getItem(STORAGE_KEY)
-
-  if (!savedValue) {
-    return createInitialDecisionState()
-  }
-
   try {
+    const savedValue = window.sessionStorage.getItem(STORAGE_KEY)
+
+    if (!savedValue) {
+      return createInitialDecisionState()
+    }
+
     const parsedValue: unknown = JSON.parse(savedValue)
 
-    if (isDecisionRoomState(parsedValue)) {
-      return parsedValue
+    if (
+      isRecord(parsedValue) &&
+      parsedValue.schemaVersion === STORAGE_SCHEMA_VERSION &&
+      isDecisionRoomState(parsedValue.state)
+    ) {
+      return normalizeSavedState(parsedValue.state)
     }
   } catch {
-    window.sessionStorage.removeItem(STORAGE_KEY)
+    try {
+      window.sessionStorage.removeItem(STORAGE_KEY)
+    } catch {
+      // Storage can be disabled; the in-memory workflow remains usable.
+    }
   }
 
   return createInitialDecisionState()
+}
+
+function normalizeSavedState(state: DecisionRoomState): DecisionRoomState {
+  return {
+    ...state,
+    resolutionOptions: state.resolutionOptions.map((option) => ({
+      ...option,
+      rejectionReason: option.rejectionReason ?? null,
+    })),
+  }
 }
 
 function writeSavedState(state: DecisionRoomState): void {
@@ -223,7 +255,14 @@ function writeSavedState(state: DecisionRoomState): void {
     return
   }
 
-  window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+  try {
+    window.sessionStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({ schemaVersion: STORAGE_SCHEMA_VERSION, state }),
+    )
+  } catch {
+    // Storage failure must not prevent an otherwise valid local state transition.
+  }
 }
 
 function clearSavedState(): void {
@@ -231,7 +270,11 @@ function clearSavedState(): void {
     return
   }
 
-  window.sessionStorage.removeItem(STORAGE_KEY)
+  try {
+    window.sessionStorage.removeItem(STORAGE_KEY)
+  } catch {
+    // Storage can be unavailable in privacy-restricted contexts.
+  }
 }
 
 function isDecisionRoomState(value: unknown): value is DecisionRoomState {
@@ -240,24 +283,105 @@ function isDecisionRoomState(value: unknown): value is DecisionRoomState {
   }
 
   return (
-    typeof value.phase === "string" &&
+    isDecisionPhase(value.phase) &&
+    Number.isInteger(value.stateVersion) &&
     typeof value.stateVersion === "number" &&
-    isRecord(value.project) &&
-    isRecord(value.activeIssue) &&
+    value.stateVersion >= 1 &&
+    isRecord(value.project) && value.project.id === "PROJECT-01" &&
+    isRecord(value.activeIssue) && value.activeIssue.id === "ISS-019" &&
     Array.isArray(value.drawings) &&
     Array.isArray(value.drawingElements) &&
     Array.isArray(value.schedule) &&
     Array.isArray(value.contracts) &&
     value.activeDrawingId === "M-204" &&
-    Array.isArray(value.constraints) &&
-    Array.isArray(value.resolutionOptions) &&
-    "impactSimulation" in value &&
-    "decision" in value &&
-    "changeOrder" in value &&
-    Array.isArray(value.activityLog)
+    Array.isArray(value.constraints) && value.constraints.every(isConstraint) &&
+    Array.isArray(value.resolutionOptions) && value.resolutionOptions.every(isResolutionOption) &&
+    (value.selectedOptionId === null || isOptionId(value.selectedOptionId)) &&
+    (value.previewOptionId === null || isOptionId(value.previewOptionId)) &&
+    (value.impactSimulation === null || isRecord(value.impactSimulation)) &&
+    (value.decision === null || isDecision(value.decision)) &&
+    (value.changeOrder === null || isRecord(value.changeOrder)) &&
+    Array.isArray(value.activityLog) && value.activityLog.every(isActivityEvent) &&
+    (value.lastError === null || isToolErrorCode(value.lastError))
   )
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null
+}
+
+function isDecisionPhase(value: unknown): boolean {
+  return [
+    "INVESTIGATING",
+    "OPTIONS_AVAILABLE",
+    "OPTION_SELECTED",
+    "IMPACT_SIMULATED",
+    "READY_FOR_APPROVAL",
+    "APPROVED",
+    "CHANGE_ORDER_DRAFTED",
+  ].includes(String(value))
+}
+
+function isOptionId(value: unknown): value is OptionId {
+  return value === "OPTION-A" || value === "OPTION-B" || value === "OPTION-C"
+}
+
+function isConstraint(value: unknown): boolean {
+  if (!isRecord(value) || value.id !== "CONSTRAINT-12" || !isRecord(value.geometry)) {
+    return false
+  }
+
+  const geometry = value.geometry
+
+  return ["x", "y", "width", "height"].every(
+    (key) => typeof geometry[key] === "number" && Number.isFinite(geometry[key]),
+  )
+}
+
+function isResolutionOption(value: unknown): boolean {
+  return (
+    isRecord(value) &&
+    isOptionId(value.id) &&
+    ["reroute", "resize", "split"].includes(String(value.strategy)) &&
+    typeof value.revision === "number" && Number.isInteger(value.revision) && value.revision >= 1 &&
+    ["available", "needs_revision", "revised", "rejected", "selected"].includes(String(value.status)) &&
+    typeof value.fingerprint === "string"
+  )
+}
+
+function isDecision(value: unknown): boolean {
+  return (
+    isRecord(value) &&
+    value.id === "DEC-019" &&
+    isOptionId(value.optionId) &&
+    typeof value.optionRevision === "number" &&
+    Number.isInteger(value.optionRevision) &&
+    value.optionRevision >= 1
+  )
+}
+
+function isActivityEvent(value: unknown): boolean {
+  return (
+    isRecord(value) &&
+    typeof value.id === "string" &&
+    typeof value.type === "string" &&
+    typeof value.label === "string" &&
+    typeof value.detail === "string" &&
+    typeof value.createdAt === "string"
+  )
+}
+
+function isToolErrorCode(value: unknown): boolean {
+  return [
+    "INVALID_STATE",
+    "OPTION_NOT_FOUND",
+    "CONSTRAINT_NOT_FOUND",
+    "OPTION_NOT_SELECTED",
+    "SIMULATION_REQUIRED",
+    "HUMAN_APPROVAL_REQUIRED",
+    "STATE_CONFLICT",
+    "OPTION_REVISION_CONFLICT",
+    "INVALID_CONSTRAINT_GEOMETRY",
+    "UNSUPPORTED_CONSTRAINT_GEOMETRY",
+  ].includes(String(value))
 }

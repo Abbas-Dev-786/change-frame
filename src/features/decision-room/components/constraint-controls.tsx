@@ -50,7 +50,7 @@ export function ConstraintControls({
       <CardHeader className="gap-1 px-4">
         <div className="flex items-center gap-2">
           <SquareDashedMousePointer aria-hidden="true" className="size-4 text-primary" />
-          <CardTitle className="text-base">Field Constraint</CardTitle>
+          <h2 className="text-base font-semibold">Field Constraint</h2>
         </div>
       </CardHeader>
       <CardContent className="grid gap-4 px-4">

@@ -29,6 +29,7 @@ The following future-scope items have been intentionally pulled into the working
 | Capability | Shipped as | Boundary |
 |---|---|---|
 | Dedicated option comparison view | Read-only UI comparison panel for cost, schedule, risk, constraint status, and decision notes | No new WebMCP tool; selection and approval remain human-controlled. |
+| Option rejection reasons | Human-only option rejection control with structured reasons, activity logging, and comparison-panel visibility | No new WebMCP tool; rejected options cannot be selected and approval remains human-controlled. |
 
 ---
 
@@ -109,7 +110,6 @@ Agents may prepare the information surrounding these actions, but authority rema
 
 ## Decision Experience
 
-- option rejection reasons
 - explicit **Reopen alternatives** action after option selection
 - multiple mitigation strategies
 - cost and schedule charts

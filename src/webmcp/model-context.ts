@@ -23,6 +23,7 @@ export type ToolExecutionOptions = {
 
 export type WebMcpToolDescriptor = {
   name: string
+  title: string
   description: string
   inputSchema: JsonSchema
   annotations: {
@@ -35,15 +36,11 @@ export type WebMcpToolDescriptor = {
   ) => WebMcpToolResponse | Promise<WebMcpToolResponse>
 }
 
-export type WebMcpRegistration = {
-  remove?: () => void
-  unregister?: () => void
-}
-
 export type ModelContext = {
   registerTool: (
     descriptor: WebMcpToolDescriptor,
-  ) => WebMcpRegistration | (() => void) | Promise<WebMcpRegistration | (() => void)>
+    options?: { signal?: AbortSignal },
+  ) => Promise<void>
 }
 
 declare global {
@@ -65,7 +62,12 @@ export async function waitForUiCoherence(options?: ToolExecutionOptions): Promis
     return
   }
 
-  await new Promise<void>((resolve) => {
+  await nextAnimationFrame()
+  await nextAnimationFrame()
+}
+
+function nextAnimationFrame(): Promise<void> {
+  return new Promise<void>((resolve) => {
     if (typeof window.requestAnimationFrame === "function") {
       window.requestAnimationFrame(() => resolve())
       return
@@ -73,18 +75,4 @@ export async function waitForUiCoherence(options?: ToolExecutionOptions): Promis
 
     window.setTimeout(resolve, 0)
   })
-}
-
-export function disposeRegistration(registration: WebMcpRegistration | (() => void)): void {
-  if (typeof registration === "function") {
-    registration()
-    return
-  }
-
-  if (typeof registration.remove === "function") {
-    registration.remove()
-    return
-  }
-
-  registration.unregister?.()
 }

@@ -88,3 +88,19 @@
 - Promoted the dedicated option comparison view from future scope into the active product UI.
 - Added a read-only comparison panel for cost, schedule, risk, constraint status, and decision notes.
 - Kept the WebMCP tool surface unchanged so the agent flow, human-only selection, and human-only approval boundaries remain intact.
+
+## 2026-09-02 — Future-scope rejection reasons promoted
+
+- Promoted option rejection reasons from future scope into the active product UI.
+- Added structured human-only rejection reasons for cost, schedule, risk, field-constraint conflicts, and engineering review.
+- Added activity logging, comparison-panel visibility, rejected-option selection guards, and same-tab saved-state normalization.
+- Kept rejection out of WebMCP so agents can observe the decision context without rejecting or approving on behalf of the human.
+
+## 2026-09-02 — Production hardening and complete deterministic gate
+
+- Replaced reload-based WebMCP refreshing with serialized async reconciliation and one `AbortController` per registration, matching the current imperative API lifecycle.
+- Made mutation responses wait for both registry reconciliation and two animation frames so the domain, visible UI, and exposed tool set agree before resolution.
+- Enforced selection eligibility, explicit invalid/unsupported constraint geometry errors, exact runtime input keys, strategy-aware mitigation, and option-revision-aware change-order scope.
+- Made reset concurrency tokens monotonic, versioned and validated saved-session envelopes, and kept route preview state transient rather than persisted.
+- Added production security headers, semantic section headings, live phase announcements, a 33-test deterministic PRD matrix, and three real Chromium WebMCP journeys.
+- Added GitHub Actions CI with TypeScript, no-explicit-`any`, Vitest, production build, and Playwright Chromium gates.

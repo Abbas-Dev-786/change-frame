@@ -24,7 +24,7 @@ export function ImpactPanel({ project, selectedOption, simulation }: ImpactPanel
   return (
     <Card className="rounded-lg border-border/70 bg-card py-4 shadow-sm">
       <CardHeader className="gap-1 px-4">
-        <CardTitle className="text-base">Project Impact</CardTitle>
+        <h2 className="text-base font-semibold">Project Impact</h2>
       </CardHeader>
       <CardContent className="grid gap-3 px-4 text-sm">
         <ImpactRow

@@ -6,6 +6,10 @@ import tailwindcss from "@tailwindcss/vite";
 const webMcpHeaders = {
   "Origin-Agent-Cluster": "?1",
   "Permissions-Policy": "tools=(self)",
+  "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self' ws:; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'",
+  "Referrer-Policy": "no-referrer",
+  "X-Content-Type-Options": "nosniff",
+  "X-Frame-Options": "DENY",
 };
 
 export default defineConfig({
@@ -26,5 +30,6 @@ export default defineConfig({
     globals: true,
     setupFiles: "./src/test/setup.ts",
     restoreMocks: true,
+    exclude: ["e2e/**", "node_modules/**", "dist/**"],
   },
 });

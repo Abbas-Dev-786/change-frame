@@ -20,7 +20,7 @@ export function IssuePanel({ issue, schedule, contracts }: IssuePanelProps) {
       <CardHeader className="gap-2 px-4">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <CardTitle className="text-base">{issue.id}</CardTitle>
+            <h2 className="text-base font-semibold">{issue.id}</h2>
             <p className="mt-1 text-sm font-medium leading-5">{issue.title}</p>
           </div>
           <Badge className="rounded-md bg-red-100 text-red-800 hover:bg-red-100">

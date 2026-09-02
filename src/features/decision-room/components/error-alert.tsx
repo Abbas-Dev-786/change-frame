@@ -16,6 +16,8 @@ const errorMessages: Record<ToolErrorCode, string> = {
   HUMAN_APPROVAL_REQUIRED: "Human approval is required before a change order can be drafted.",
   STATE_CONFLICT: "The decision changed. Reread context and retry with the current state version.",
   OPTION_REVISION_CONFLICT: "The option revision changed. Reread the option before retrying.",
+  INVALID_CONSTRAINT_GEOMETRY: "Constraint coordinates must be finite and dimensions must be positive.",
+  UNSUPPORTED_CONSTRAINT_GEOMETRY: "The supported reroute still crosses this blocked region. Adjust the constraint or choose another eligible option.",
 }
 
 export function ErrorAlert({ error }: ErrorAlertProps) {

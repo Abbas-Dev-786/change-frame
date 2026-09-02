@@ -94,7 +94,7 @@ export function PlanBoard({
   return (
     <Card className="rounded-lg border-border/70 bg-card py-4 shadow-sm">
       <CardHeader className="gap-1 px-4">
-        <CardTitle className="text-base">M-204 Mechanical Plan</CardTitle>
+        <h2 className="text-base font-semibold">M-204 Mechanical Plan</h2>
         <p className="text-sm text-muted-foreground">{issue.location}</p>
       </CardHeader>
       <CardContent className="px-4">

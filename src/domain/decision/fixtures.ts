@@ -202,6 +202,7 @@ export const baseResolutionOptionsFixture: ResolutionOption[] = [
     risk: "medium",
     constraintIds: [],
     status: "available",
+    rejectionReason: null,
     fingerprint: "OPTION-A:r1:baseline",
   },
   {
@@ -224,6 +225,7 @@ export const baseResolutionOptionsFixture: ResolutionOption[] = [
     risk: "high",
     constraintIds: [],
     status: "available",
+    rejectionReason: null,
     fingerprint: "OPTION-B:r1:baseline",
   },
   {
@@ -248,6 +250,7 @@ export const baseResolutionOptionsFixture: ResolutionOption[] = [
     risk: "low",
     constraintIds: [],
     status: "available",
+    rejectionReason: null,
     fingerprint: "OPTION-C:r1:baseline",
   },
 ]

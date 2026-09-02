@@ -16,8 +16,16 @@ export type SimulateImpactInput = {
   expectedStateVersion: number
 }
 
+export function parseEmptyInput(input: unknown): Record<string, never> | null {
+  return isRecord(input) && hasExactKeys(input, []) ? {} : null
+}
+
 export function parseEvaluateOptionsInput(input: unknown): EvaluateOptionsInput | null {
-  if (!isRecord(input) || !isNonNegativeInteger(input.expectedStateVersion)) {
+  if (
+    !isRecord(input) ||
+    !hasExactKeys(input, ["expectedStateVersion"]) ||
+    !isNonNegativeInteger(input.expectedStateVersion)
+  ) {
     return null
   }
 
@@ -29,6 +37,12 @@ export function parseEvaluateOptionsInput(input: unknown): EvaluateOptionsInput 
 export function parseReviseOptionInput(input: unknown): ReviseOptionInput | null {
   if (
     !isRecord(input) ||
+    !hasExactKeys(input, [
+      "optionId",
+      "constraintIds",
+      "expectedOptionRevision",
+      "expectedStateVersion",
+    ]) ||
     !isOptionId(input.optionId) ||
     !isConstraintIdList(input.constraintIds) ||
     !isNonNegativeInteger(input.expectedOptionRevision) ||
@@ -48,6 +62,7 @@ export function parseReviseOptionInput(input: unknown): ReviseOptionInput | null
 export function parseSimulateImpactInput(input: unknown): SimulateImpactInput | null {
   if (
     !isRecord(input) ||
+    !hasExactKeys(input, ["preserveInspectionMilestone", "expectedStateVersion"]) ||
     typeof input.preserveInspectionMilestone !== "boolean" ||
     !isNonNegativeInteger(input.expectedStateVersion)
   ) {
@@ -66,6 +81,16 @@ export function parseExpectedVersionInput(input: unknown): EvaluateOptionsInput 
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null
+}
+
+function hasExactKeys(value: Record<string, unknown>, expectedKeys: string[]): boolean {
+  const actualKeys = Object.keys(value).sort()
+  const sortedExpectedKeys = [...expectedKeys].sort()
+
+  return (
+    actualKeys.length === sortedExpectedKeys.length &&
+    actualKeys.every((key, index) => key === sortedExpectedKeys[index])
+  )
 }
 
 function isNonNegativeInteger(value: unknown): value is number {

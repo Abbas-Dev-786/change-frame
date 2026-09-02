@@ -8,6 +8,7 @@ import type {
   DomainResult,
   DomainSuccess,
   Mitigation,
+  OptionRejectionReason,
   OptionId,
   Rect,
   ResolutionOption,
@@ -32,6 +33,11 @@ export type SimulateImpactInput = ExpectedVersionInput & {
   preserveInspectionMilestone: boolean
 }
 
+export type RejectionInput = {
+  optionId: OptionId
+  reason: OptionRejectionReason
+}
+
 export function evaluateResolutionOptions(
   state: DecisionRoomState,
   input: ExpectedVersionInput,
@@ -43,17 +49,20 @@ export function evaluateResolutionOptions(
     return conflict
   }
 
-  if (state.resolutionOptions.length === 3) {
-    return success(state, false)
-  }
-
-  if (state.phase !== "INVESTIGATING") {
+  if (
+    state.phase !== "INVESTIGATING" &&
+    !(state.phase === "OPTIONS_AVAILABLE" && state.resolutionOptions.length === 3)
+  ) {
     return failure(
       state,
       "INVALID_STATE",
       "Resolution options can only be evaluated while investigating.",
       false,
     )
+  }
+
+  if (state.resolutionOptions.length === 3) {
+    return success(state, false)
   }
 
   return success(
@@ -98,6 +107,15 @@ export function upsertHumanConstraint(
     )
   }
 
+  if (!isFinitePositiveRect(draft.geometry)) {
+    return failure(
+      state,
+      "INVALID_CONSTRAINT_GEOMETRY",
+      "Constraint geometry must use finite coordinates and positive dimensions.",
+      false,
+    )
+  }
+
   const existingConstraint = state.constraints.find((constraint) => constraint.id === "CONSTRAINT-12")
   const sanitizedLabel = sanitizeConstraintLabel(draft.label)
   const geometry = clampRectToPlan(draft.geometry)
@@ -125,10 +143,10 @@ export function upsertHumanConstraint(
   const markedOptions = state.resolutionOptions.map((option) => ({
     ...option,
     status:
-      option.id === "OPTION-A" && option.revision === 1
-        ? "needs_revision"
+      option.id === "OPTION-A" && option.status !== "rejected"
+        ? "needs_revision" as const
         : option.status === "selected"
-          ? "available"
+          ? "available" as const
           : option.status,
   }))
 
@@ -207,7 +225,34 @@ export function reviseResolutionOption(
     )
   }
 
+  if (option.status === "rejected") {
+    return failure(
+      state,
+      "INVALID_STATE",
+      "Rejected options cannot be revised in the current workflow.",
+      false,
+    )
+  }
+
+  if (option.strategy !== "reroute") {
+    return failure(
+      state,
+      "INVALID_STATE",
+      "Only reroute options support blocked-region route reconciliation.",
+      false,
+    )
+  }
+
   const revisedOption = reviseOptionAgainstConstraint(option, constraint)
+
+  if (!revisedOption) {
+    return failure(
+      state,
+      "UNSUPPORTED_CONSTRAINT_GEOMETRY",
+      "The supported Corridor C East revision still intersects CONSTRAINT-12. Move or resize the blocked region, reject this option, or select another eligible strategy.",
+      false,
+    )
+  }
 
   if (option.fingerprint === revisedOption.fingerprint) {
     return success(state, false)
@@ -263,6 +308,17 @@ export function selectResolutionOption(
     )
   }
 
+  if (!isOptionEligibleForSelection(option)) {
+    return failure(
+      state,
+      "INVALID_STATE",
+      option.status === "needs_revision"
+        ? "This option intersects the active field constraint and must be revised before selection."
+        : "Rejected options cannot be selected in the current workflow.",
+      false,
+    )
+  }
+
   if (state.selectedOptionId === optionId && state.phase === "OPTION_SELECTED") {
     return success(state, false)
   }
@@ -287,6 +343,78 @@ export function selectResolutionOption(
       state.selectedOptionId ? "selection_changed" : "option_selected",
       state.selectedOptionId ? "Selection changed" : "Option selected",
       `${optionId} selected by the human reviewer.`,
+      now,
+    ),
+    true,
+  )
+}
+
+export function rejectResolutionOption(
+  state: DecisionRoomState,
+  input: RejectionInput,
+  now = new Date().toISOString(),
+): DomainResult {
+  if (!canRejectOption(state.phase)) {
+    return failure(
+      state,
+      "INVALID_STATE",
+      "Options can only be rejected before approval preparation.",
+      false,
+    )
+  }
+
+  if (state.resolutionOptions.length === 0) {
+    return failure(
+      state,
+      "INVALID_STATE",
+      "Resolution options must be available before one can be rejected.",
+      false,
+    )
+  }
+
+  const option = state.resolutionOptions.find((candidate) => candidate.id === input.optionId)
+
+  if (!option) {
+    return failure(
+      state,
+      "OPTION_NOT_FOUND",
+      `Resolution option ${input.optionId} does not exist.`,
+      false,
+    )
+  }
+
+  if (option.status === "rejected" && option.rejectionReason === input.reason) {
+    return success(state, false)
+  }
+
+  const rejectsSelectedOption = state.selectedOptionId === input.optionId
+  const nextOptions = state.resolutionOptions.map((candidate) =>
+    candidate.id === input.optionId
+      ? {
+          ...candidate,
+          status: "rejected" as const,
+          rejectionReason: input.reason,
+        }
+      : candidate,
+  )
+
+  return success(
+    withActivity(
+      {
+        ...state,
+        phase: rejectsSelectedOption ? "OPTIONS_AVAILABLE" : state.phase,
+        stateVersion: state.stateVersion + 1,
+        resolutionOptions: nextOptions,
+        selectedOptionId: rejectsSelectedOption ? null : state.selectedOptionId,
+        previewOptionId: input.optionId,
+        impactSimulation: rejectsSelectedOption ? null : state.impactSimulation,
+        decision: rejectsSelectedOption ? null : state.decision,
+        changeOrder: rejectsSelectedOption ? null : state.changeOrder,
+        lastError: null,
+      },
+      "option_rejected",
+      "Option rejected",
+      `${input.optionId} rejected: ${formatRejectionReason(input.reason)}.`,
       now,
     ),
     true,
@@ -333,7 +461,7 @@ export function simulateProjectImpact(
     )
   }
 
-  const mitigation: Mitigation | null = input.preserveInspectionMilestone
+  const mitigation: Mitigation | null = input.preserveInspectionMilestone && option.scheduleImpactDays > 0
     ? {
         id: "MIT-001",
         type: "additional_mechanical_crew",
@@ -434,6 +562,7 @@ export function prepareChangeDecision(
           id: "DEC-019",
           issueId: "ISS-019",
           optionId: state.impactSimulation.optionId,
+          optionRevision: state.impactSimulation.optionRevision,
           mitigationId: state.impactSimulation.mitigation?.id ?? null,
           costImpact: state.impactSimulation.totalCostImpact,
           scheduleImpactDays: state.impactSimulation.finalScheduleImpactDays,
@@ -513,13 +642,25 @@ export function draftChangeOrder(
     )
   }
 
+  const selectedOption = state.resolutionOptions.find(
+    (option) => option.id === state.decision?.optionId,
+  )
+
+  if (!selectedOption || selectedOption.revision !== state.decision.optionRevision) {
+    return failure(
+      state,
+      "OPTION_NOT_FOUND",
+      "The approved option revision is unavailable; the change order cannot be drafted safely.",
+      false,
+    )
+  }
+
   const changeOrder = {
     id: "CO-007" as const,
     decisionId: "DEC-019" as const,
     reason:
       "Field coordination conflict between mechanical duct D22 and structural beam B14.",
-    scope:
-      "Reroute supply duct through Corridor C East and add additional MEP labor to preserve inspection milestone.",
+    scope: changeOrderScope(selectedOption, state.decision.mitigationId),
     costImpact: state.decision.costImpact,
     scheduleImpactDays: state.decision.scheduleImpactDays,
     status: "draft" as const,
@@ -563,6 +704,7 @@ export function setPreviewOption(
 }
 
 export function resetDecisionRoom(
+  currentState: DecisionRoomState,
   createInitial: () => DecisionRoomState,
   now = new Date().toISOString(),
 ): DecisionRoomState {
@@ -571,7 +713,7 @@ export function resetDecisionRoom(
   return withActivity(
     {
       ...initialState,
-      stateVersion: initialState.stateVersion + 1,
+      stateVersion: currentState.stateVersion + 1,
     },
     "workflow_reset",
     "Workflow reset",
@@ -588,6 +730,10 @@ export function getPreviewedOption(state: DecisionRoomState): ResolutionOption |
   }
 
   return state.resolutionOptions.find((option) => option.id === targetId) ?? null
+}
+
+export function isOptionEligibleForSelection(option: ResolutionOption): boolean {
+  return option.status === "available" || option.status === "revised" || option.status === "selected"
 }
 
 export function formatCurrency(value: number): string {
@@ -610,12 +756,24 @@ export function formatScheduleImpact(days: number): string {
   return days > 0 ? `+${days} day${days === 1 ? "" : "s"}` : `${days} days`
 }
 
+export function formatRejectionReason(reason: OptionRejectionReason): string {
+  const labels: Record<OptionRejectionReason, string> = {
+    too_risky: "Too risky",
+    too_expensive: "Too expensive",
+    schedule_exposure: "Schedule exposure too high",
+    violates_field_constraint: "Violates field constraint",
+    requires_engineering_review: "Requires engineering review",
+  }
+
+  return labels[reason]
+}
+
 function reviseOptionAgainstConstraint(
   option: ResolutionOption,
   constraint: Constraint,
-): ResolutionOption {
+): ResolutionOption | null {
   if (option.id !== "OPTION-A") {
-    return option
+    return null
   }
 
   const revisedOption: ResolutionOption = {
@@ -638,14 +796,48 @@ function reviseOptionAgainstConstraint(
     risk: "medium",
     constraintIds: ["CONSTRAINT-12"],
     status: "revised",
+    rejectionReason: null,
     fingerprint: `OPTION-A:r2:${constraintFingerprint(constraint)}`,
   }
 
   if (routeIntersectsRect(revisedOption.routeOverlay, constraint.geometry)) {
-    return option
+    return null
   }
 
   return revisedOption
+}
+
+function changeOrderScope(
+  option: ResolutionOption,
+  mitigationId: Mitigation["id"] | null,
+): string {
+  const strategyScope: Record<ResolutionOption["strategy"], string> = {
+    reroute: option.revision > 1
+      ? "Reroute supply duct D22 through Corridor C East."
+      : "Reroute supply duct D22 through the east corridor bay.",
+    resize: "Resize and flatten the D22 duct section through the conflict zone.",
+    split: "Split D22 into two smaller supply branches around structural beam B14.",
+  }
+  const mitigationScope = mitigationId === "MIT-001"
+    ? " Add a second MEP crew to preserve the inspection milestone."
+    : ""
+
+  return `${strategyScope[option.strategy]}${mitigationScope}`
+}
+
+function isFinitePositiveRect(rect: Rect): boolean {
+  return (
+    Number.isFinite(rect.x) &&
+    Number.isFinite(rect.y) &&
+    Number.isFinite(rect.width) &&
+    Number.isFinite(rect.height) &&
+    rect.width > 0 &&
+    rect.height > 0
+  )
+}
+
+function canRejectOption(phase: DecisionPhase): boolean {
+  return ["OPTIONS_AVAILABLE", "OPTION_SELECTED", "IMPACT_SIMULATED"].includes(phase)
 }
 
 function validateExpectedVersion(

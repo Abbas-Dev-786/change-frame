@@ -27,7 +27,15 @@ export type ResolutionStatus =
   | "available"
   | "needs_revision"
   | "revised"
+  | "rejected"
   | "selected"
+
+export type OptionRejectionReason =
+  | "too_risky"
+  | "too_expensive"
+  | "schedule_exposure"
+  | "violates_field_constraint"
+  | "requires_engineering_review"
 
 export type RiskLevel = "low" | "medium" | "high"
 
@@ -36,6 +44,7 @@ export type ActivityEventType =
   | "options_evaluated"
   | "constraint_upserted"
   | "option_revised"
+  | "option_rejected"
   | "option_selected"
   | "selection_changed"
   | "impact_simulated"
@@ -53,6 +62,8 @@ export type ToolErrorCode =
   | "HUMAN_APPROVAL_REQUIRED"
   | "STATE_CONFLICT"
   | "OPTION_REVISION_CONFLICT"
+  | "INVALID_CONSTRAINT_GEOMETRY"
+  | "UNSUPPORTED_CONSTRAINT_GEOMETRY"
 
 export type Point = {
   x: number
@@ -133,6 +144,7 @@ export type ResolutionOption = {
   risk: RiskLevel
   constraintIds: ConstraintId[]
   status: ResolutionStatus
+  rejectionReason: OptionRejectionReason | null
   fingerprint: string
 }
 
@@ -180,6 +192,7 @@ export type Decision = {
   id: "DEC-019"
   issueId: "ISS-019"
   optionId: OptionId
+  optionRevision: number
   mitigationId: Mitigation["id"] | null
   costImpact: number
   scheduleImpactDays: number

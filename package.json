@@ -9,9 +9,11 @@
     "check:no-any": "node scripts/check-no-explicit-any.mjs",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:browser": "playwright test",
     "test:watch": "vitest",
     "preview": "vite preview",
-    "verify": "npm run check:no-any && npm run typecheck && npm test && npm run build"
+    "verify": "npm run check:no-any && npm run typecheck && npm test && npm run build",
+    "verify:all": "npm run verify && npm run test:browser"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
@@ -37,6 +39,7 @@
     "zustand": "^5.0.15"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
     "@types/node": "^26.4.1",

@@ -13,7 +13,7 @@ export function ActivityTimeline({ events }: ActivityTimelineProps) {
       <CardHeader className="gap-1 px-4">
         <div className="flex items-center gap-2">
           <History aria-hidden="true" className="size-4 text-primary" />
-          <CardTitle className="text-base">Decision Activity</CardTitle>
+          <h2 className="text-base font-semibold">Decision Activity</h2>
         </div>
       </CardHeader>
       <CardContent className="grid gap-3 px-4">

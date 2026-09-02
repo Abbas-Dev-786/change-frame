@@ -20,6 +20,7 @@ import {
 import {
   formatScheduleImpact,
   formatSignedCurrency,
+  formatRejectionReason,
   type OptionId,
   type ResolutionOption,
   type RiskLevel,
@@ -59,7 +60,7 @@ export function OptionComparisonPanel({
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <GitCompareArrows aria-hidden="true" className="size-4 text-primary" />
-            <CardTitle className="text-base">Option Comparison</CardTitle>
+            <h2 className="text-base font-semibold">Option Comparison</h2>
           </div>
           <Badge variant="outline" className="rounded-md">
             Decision fit
@@ -157,7 +158,7 @@ function buildComparisonRows(options: ResolutionOption[]): ComparisonRow[] {
     .map((option) => ({
       option,
       score: scoreOption(option),
-      fitLabel: option.status === "needs_revision" ? "Needs coordination" : "Best fit",
+      fitLabel: getFitLabel(option),
       constraintLabel: getConstraintLabel(option),
       decisionNote: getDecisionNote(option),
     }))
@@ -166,16 +167,34 @@ function buildComparisonRows(options: ResolutionOption[]): ComparisonRow[] {
 
 function scoreOption(option: ResolutionOption): number {
   const constraintPenalty = option.status === "needs_revision" ? 100 : 0
+  const rejectionPenalty = option.status === "rejected" ? 1_000 : 0
 
   return (
     option.costImpact / 1000 +
     option.scheduleImpactDays * 2 +
     riskWeights[option.risk] +
-    constraintPenalty
+    constraintPenalty +
+    rejectionPenalty
   )
 }
 
+function getFitLabel(option: ResolutionOption): string {
+  if (option.status === "rejected") {
+    return "Rejected"
+  }
+
+  if (option.status === "needs_revision") {
+    return "Needs coordination"
+  }
+
+  return "Best fit"
+}
+
 function getConstraintLabel(option: ResolutionOption): string {
+  if (option.status === "rejected" && option.rejectionReason) {
+    return formatRejectionReason(option.rejectionReason)
+  }
+
   if (option.status === "needs_revision") {
     return "Blocked route"
   }
@@ -188,6 +207,10 @@ function getConstraintLabel(option: ResolutionOption): string {
 }
 
 function getDecisionNote(option: ResolutionOption): string {
+  if (option.status === "rejected" && option.rejectionReason) {
+    return `Rejected by reviewer: ${formatRejectionReason(option.rejectionReason).toLowerCase()}.`
+  }
+
   if (option.status === "needs_revision") {
     return "Requires route revision before it should be selected."
   }

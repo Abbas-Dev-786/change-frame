@@ -40,12 +40,14 @@ export function DecisionHeader({
             <h1 className="text-xl font-semibold tracking-normal text-foreground sm:text-2xl">
               ChangeDecision OS
             </h1>
-            <Badge variant="outline" className="rounded-md border-primary/25 bg-primary/5 text-primary">
-              {phaseLabels[phase]}
-            </Badge>
-            <Badge variant="secondary" className="rounded-md">
-              v{stateVersion}
-            </Badge>
+            <span aria-live="polite" aria-atomic="true" className="flex gap-2">
+              <Badge variant="outline" className="rounded-md border-primary/25 bg-primary/5 text-primary">
+                {phaseLabels[phase]}
+              </Badge>
+              <Badge variant="secondary" className="rounded-md">
+                v{stateVersion}
+              </Badge>
+            </span>
           </div>
           <p className="mt-1 text-sm text-muted-foreground">{projectName} - Level 4 Decision Room</p>
         </div>

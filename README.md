@@ -5,11 +5,11 @@ ChangeDecision OS is a WebMCP-native construction decision workspace for resolvi
 The current build implements the full local MVP through Phase 12 readiness:
 
 - versioned central decision state and deterministic state-machine actions
-- decision-room UI with issue, plan, options, comparison, impact, and activity panels
+- decision-room UI with issue, plan, options, comparison, impact, rejection reasons, and activity panels
 - human-created blocked-region constraints by pointer or coordinate fields
 - predefined resolution routes, Corridor C East revision logic, and geometry tests
 - production WebMCP read and mutation tools through `draft_change_order`
-- dynamic tool registration by decision phase
+- spec-compliant, AbortSignal-owned dynamic tool registration by decision phase without reloads
 - explicit human-only approval before `draft_change_order` becomes available
 - final draft change-order artifact `CO-007`
 - local eval plan, submission checklist, and open-source license
@@ -39,6 +39,15 @@ npm run verify
 ```
 
 This checks the no-`any` rule, TypeScript, tests, and the production build.
+
+Run the complete gate, including real Chromium WebMCP lifecycle tests:
+
+```bash
+npx playwright install chromium
+npm run verify:all
+```
+
+GitHub Actions runs the same complete gate for every pull request and every push to `main`.
 
 The human interface remains usable without WebMCP. In a supported browser, the app exposes only the tools valid for the current decision phase.
 
