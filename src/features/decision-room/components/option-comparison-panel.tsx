@@ -29,6 +29,7 @@ import {
 type OptionComparisonPanelProps = {
   options: ResolutionOption[]
   selectedOptionId: OptionId | null
+  currency: string
   onPreview: (optionId: OptionId | null) => void
 }
 
@@ -49,6 +50,7 @@ const riskWeights: Record<RiskLevel, number> = {
 export function OptionComparisonPanel({
   options,
   selectedOptionId,
+  currency,
   onPreview,
 }: OptionComparisonPanelProps) {
   const rows = buildComparisonRows(options)
@@ -99,6 +101,7 @@ export function OptionComparisonPanel({
                   row={row}
                   highlighted={row.option.id === bestOptionId}
                   selected={row.option.id === selectedOptionId}
+                  currency={currency}
                   onPreview={onPreview}
                 />
               ))}
@@ -114,11 +117,13 @@ function ComparisonTableRow({
   row,
   highlighted,
   selected,
+  currency,
   onPreview,
 }: {
   row: ComparisonRow
   highlighted: boolean
   selected: boolean
+  currency: string
   onPreview: (optionId: OptionId | null) => void
 }) {
   return (
@@ -142,7 +147,7 @@ function ComparisonTableRow({
           ) : null}
         </div>
       </TableCell>
-      <TableCell>{formatSignedCurrency(row.option.costImpact)}</TableCell>
+      <TableCell>{formatSignedCurrency(row.option.costImpact, currency)}</TableCell>
       <TableCell>{formatScheduleImpact(row.option.scheduleImpactDays)}</TableCell>
       <TableCell className="capitalize">{row.option.risk}</TableCell>
       <TableCell>{row.constraintLabel}</TableCell>
@@ -215,13 +220,5 @@ function getDecisionNote(option: ResolutionOption): string {
     return "Requires route revision before it should be selected."
   }
 
-  if (option.id === "OPTION-A" && option.revision > 1) {
-    return "Balances constructability, cost, and milestone protection after the field constraint."
-  }
-
-  if (option.id === "OPTION-B") {
-    return "Lowest direct cost, but the high constructability risk weakens confidence."
-  }
-
-  return "Lower engineering risk, but higher cost and schedule exposure."
+  return option.rationale
 }

@@ -1,47 +1,42 @@
 # ChangeFrame Architecture
 
-The application is a source-level modular monolith. It deploys as one static web application while keeping domain policy, browser integration, React state adaptation, and presentation separated.
-
-## Dependency direction
+ChangeFrame is a frontend-only modular monolith with an open-ended agent input boundary.
 
 ```text
-components/ui (shared shadcn primitives)
-                ↑
-feature components → feature hooks → store adapter → domain policy
-                         ↑
-                    WebMCP adapter
-                ↑
-              App.tsx
+User project brief
+       │
+       ▼
+Browser agent ──► typed WebMCP proposals ──► runtime guards
+                                                │
+Human UI ───────────────────────────────────────┤
+                                                ▼
+                                      pure domain state machine
+                                                │
+                         ┌──────────────────────┼─────────────────────┐
+                         ▼                      ▼                     ▼
+                    visible UI          tool capability set    flight recorder
 ```
 
-Dependencies point toward the domain model. The domain layer contains no React, Tailwind, shadcn, browser API, Zustand, or persistence imports.
+## Boundaries
 
-## Top-level structure
+- `src/domain/decision` owns policy, validation, geometry checks and state transitions. It knows nothing about React, Zustand or WebMCP.
+- `src/store` adapts pure domain actions to session persistence and UI subscriptions.
+- `src/webmcp` owns browser-agent schemas, runtime parsing, responses and dynamic registration.
+- `src/features/decision-room` presents the same state to the human and never invents agent output.
+- `src/observability` records actor attribution and capability transitions without participating in authorization.
 
-```text
-components/ui/                         generated shadcn primitives
-hooks/                                 shared shadcn hooks
-lib/                                   shared framework utilities
-src/domain/decision/                   entities, fixtures, geometry, state-machine actions
-src/store/                             Zustand state adapter and session persistence
-src/observability/                     session-only human, agent, and registry traces
-src/webmcp/                            WebMCP descriptors, schemas, validators, registry
-src/features/decision-room/hooks/      React hook for decision-room state
-src/features/decision-room/components/ Decision Room presentation components
-src/App.tsx                            application composition root
-src/main.tsx                           React browser bootstrap
-scripts/                                repository quality checks
-```
+## Data and reasoning model
 
-## Rules
+A fresh state contains one replaceable starter project and issue, but no alternatives or expected answer. `configure_decision_context` can replace that context with project, issue, drawing elements, schedule, contracts, baseline constraints and canvas dimensions supplied at runtime. `evaluate_resolution_options` accepts original structured alternatives from the browser agent. The domain materializes them with provenance and stable revisions.
 
-- Product features live under `src/features/<feature>`.
-- Shared shadcn primitives remain under `components/ui` and contain no product policy.
-- Feature models do not import React, browser APIs, Zustand, Tailwind, or shadcn.
-- WebMCP modules translate browser behavior into feature-owned contracts.
-- Components consume feature hooks; they do not register WebMCP tools directly.
-- Explicit `any` types are prohibited and checked by `npm run check:no-any`.
-- WebMCP production tools in later phases must call the same domain actions as the UI.
-- Human approval is a domain action exposed only through UI dispatch, never through WebMCP.
-- When the phase-specific WebMCP tool set changes, the registry aborts obsolete registrations and asynchronously reconciles the valid tool set without a document reload.
-- Flight-recorder telemetry is presentation-only, redacts tool inputs, and never participates in domain transitions, persistence, or authorization decisions.
+The model authors project-context structure, alternatives, rationale, assumptions, confidence, estimates, optional route geometry, and optional mitigation. ChangeFrame deterministically verifies schemas, cross-reference integrity, state versions, numeric bounds, canvas bounds, route/constraint intersections, impact arithmetic, and authority.
+
+Determinism is intentionally limited to verification, state safety and automated tests. It no longer supplies product answers.
+
+## Human authority
+
+Selection, rejection and approval are UI-only actions. The WebMCP registry never exposes them. Drafting becomes available only after a decision has an approval timestamp created by the human action.
+
+## Persistence
+
+Same-tab state is stored under schema version 4. Legacy sessions are intentionally ignored. Reset preserves a monotonically increasing state version while returning to the replaceable starter project with no alternatives.

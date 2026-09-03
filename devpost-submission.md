@@ -16,7 +16,7 @@ Today, that context is fragmented across drawings, issue records, spreadsheets, 
 
 ChangeFrame is a WebMCP-native construction decision workspace in which a project manager and a browser agent resolve a field coordination conflict together.
 
-The demo models a realistic HVAC duct D22 conflict with structural beam B14 at Riverside Office Tower. The agent reads the active issue, generates three supported resolution strategies, reacts to a human-drawn blocked region, revises the affected route, and simulates the combined cost and schedule impact. It can prepare a decision for review, but the project manager alone selects the preferred option and approves the outcome. Only after that explicit approval does ChangeFrame expose the tool that lets the agent draft change order `CO-007`.
+The app opens with a credible but replaceable HVAC duct D22 conflict with structural beam B14 at Riverside Office Tower. No resolution options or expected answer are stored. The agent reads the active issue and authors original resolution strategies with rationale, assumptions, confidence, estimates, and optional route geometry. It reacts to a human-drawn blocked region, revises the affected route, and proposes an optional mitigation while ChangeFrame performs the impact arithmetic. It can prepare a decision for review, but the project manager alone selects the preferred option and approves the outcome. Only after that explicit approval does ChangeFrame expose the tool that lets the agent draft a change order.
 
 This is not a chatbot placed beside an existing UI. The human and agent operate on the same versioned application state, and every agent action visibly updates the same decision room the human is reviewing.
 
@@ -40,7 +40,7 @@ What people and agents can now do together:
 
 The browser agent is a participant in the product workflow rather than a hidden backend service. It discovers and invokes the tools that ChangeFrame exposes for the current decision phase, interprets the structured results, and decides which valid capability to use next.
 
-WebMCP turns the page into a reliable agent surface. ChangeFrame registers seven domain-level tools: two read tools for decision context and human constraints, plus five phase-gated mutation tools for evaluating options, revising a route, simulating impact, preparing a decision, and drafting the approved change order.
+WebMCP turns the page into a reliable agent surface. ChangeFrame registers eight domain-level tools: two read tools for decision context and human constraints, plus six phase-gated mutation tools for configuring or replacing project context, authoring options, revising a route, simulating impact, preparing a decision, and drafting the approved change order.
 
 The tool set changes as the decision advances. Selection, rejection, and approval are intentionally never exposed to the agent. This demonstrates an AI collaboration model in which capability is dynamic, authority is explicit, and the browser application remains the shared source of truth.
 
@@ -53,11 +53,12 @@ During iteration, Codex also helped identify and fix lifecycle and concurrency r
 ## Key Features
 
 - Interactive plan with pointer and keyboard-coordinate constraint creation
-- Three deterministic resolution options with route overlays and revision visualization
+- One credible, replaceable starter project with no predetermined answer
+- Two to five original agent-authored resolution options with route overlays and revision visualization
 - Side-by-side cost, schedule, risk, and constraint comparison
 - Project-impact simulation with inspection-milestone mitigation
 - Human-only option rejection, selection, and final approval
-- Seven typed WebMCP tools with phase-based dynamic availability
+- Eight typed WebMCP tools with phase-based dynamic availability
 - Optimistic concurrency through `expectedStateVersion` and side-effect-free conflicts
 - Agent Flight Recorder with redacted tool spans, actor attribution, and capability transitions
 - Graceful non-WebMCP fallback for the complete human interface
@@ -74,14 +75,14 @@ No backend is required for the hackathon scenario. Versioned state is saved in s
 ## Testing Instructions
 
 1. Open the live app in ChatGPT's in-app browser or Google Chrome with WebMCP enabled.
-2. Begin a fresh session and ask the agent to inspect the Decision Room and generate the supported options.
+2. Begin a reset session and ask the agent to inspect the Riverside starter project and author three materially different options.
 3. Draw a blocked region on the plan, then ask the agent to discover it and revise the affected option.
-4. Select revised `OPTION-A` manually.
-5. Ask the agent to preserve the inspection milestone, simulate impact, and prepare the decision.
-6. Verify the UI reports `+$6,500`, `0 days`, and `READY_FOR_APPROVAL`.
+4. Select an eligible revised option manually.
+5. Ask the agent to propose a mitigation, calculate impact, and prepare the decision.
+6. Verify that the UI reflects the selected agent-authored estimates and reports `READY_FOR_APPROVAL`.
 7. Ask the agent to approve the decision; verify it refuses because approval is human-only.
 8. Click **Approve decision**, then ask the agent to draft the change order.
-9. Verify change order `CO-007` appears and is clearly labeled as a draft.
+9. Verify a change order derived from the live issue ID appears and is clearly labeled as a draft.
 
 Local verification:
 
@@ -106,15 +107,7 @@ The repository contains a complete root-level MIT `LICENSE` file so GitHub can d
 
 TODO: Add the public YouTube URL for a narrated video under three minutes.
 
-Suggested outline:
-
-1. Show the working product and active HVAC/beam conflict immediately.
-2. Have the agent read context and generate options.
-3. Draw a human constraint and have the agent revise the route.
-4. Select the option, simulate impact, and prepare the decision.
-5. Demonstrate that approval is human-only.
-6. Approve in the UI, then have the agent draft `CO-007`.
-7. Close on dynamic tools, shared state, and the Flight Recorder.
+The complete timed narration, prompts, screen actions, editing notes, recovery lines, and rehearsal checklist are in `docs/DEMO_VIDEO_SCRIPT.md`.
 
 ## Screenshot Shot List
 
@@ -131,12 +124,12 @@ Suggested outline:
 - Public repository URL is available.
 - The repository includes a detectable MIT license file.
 - The description explicitly covers WebMCP fit, user-experience improvement, human-agent collaboration, and implementation.
-- The deterministic project gate and Chromium WebMCP journeys are implemented.
+- The generic runtime project gate and Chromium WebMCP journeys are implemented.
 - A public narrated demo video is still required.
 
 ## Known Limitations
 
-- The hackathon build contains one deterministic synthetic construction scenario rather than production project data.
+- The hackathon build includes one synthetic starter project for immediate comprehension; it can be replaced at runtime and contains no resolution options or expected answer.
 - It does not connect to Procore, Autodesk Construction Cloud, scheduling, estimating, or contract systems.
 - It creates a draft change-order artifact only; it cannot sign, authorize, transmit, or execute a contract change.
 - WebMCP agent interaction requires a compatible client, though the human interface remains functional in standard browsers.

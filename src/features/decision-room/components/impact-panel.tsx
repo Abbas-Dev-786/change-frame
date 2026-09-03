@@ -30,29 +30,29 @@ export function ImpactPanel({ project, selectedOption, simulation }: ImpactPanel
         <ImpactRow
           icon={<Banknote aria-hidden="true" />}
           label="Base budget"
-          value={formatCurrency(project.budget)}
+          value={formatCurrency(project.budget, project.currency)}
         />
         <ImpactRow
           icon={<Banknote aria-hidden="true" />}
           label={simulation ? "Final change" : "Selected change"}
-          value={formatSignedCurrency(totalCost)}
+          value={formatSignedCurrency(totalCost, project.currency)}
         />
         {simulation?.mitigation ? (
           <ImpactRow
             icon={<Banknote aria-hidden="true" />}
             label="Mitigation cost"
-            value={formatSignedCurrency(simulation.mitigation.additionalCost)}
+            value={formatSignedCurrency(simulation.mitigation.additionalCost, project.currency)}
           />
         ) : null}
         <ImpactRow
           icon={<Banknote aria-hidden="true" />}
           label="Base route change"
-          value={formatSignedCurrency(selectedCost)}
+          value={formatSignedCurrency(selectedCost, project.currency)}
         />
         <ImpactRow
           icon={<Banknote aria-hidden="true" />}
           label="Projected budget"
-          value={formatCurrency(projectedBudget)}
+          value={formatCurrency(projectedBudget, project.currency)}
         />
         <ImpactRow
           icon={<CalendarClock aria-hidden="true" />}
@@ -62,7 +62,7 @@ export function ImpactPanel({ project, selectedOption, simulation }: ImpactPanel
         <ImpactRow
           icon={<CalendarClock aria-hidden="true" />}
           label="Activity"
-          value="MEP-342"
+          value={selectedOption ? "From agent estimate" : "Waiting for selection"}
         />
       </CardContent>
     </Card>

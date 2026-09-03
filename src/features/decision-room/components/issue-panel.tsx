@@ -12,8 +12,8 @@ type IssuePanelProps = {
 }
 
 export function IssuePanel({ issue, schedule, contracts }: IssuePanelProps) {
-  const affectedActivity = schedule.find((activity) => activity.id === "MEP-342")
-  const affectedContract = contracts.find((contract) => contract.id === "MEP-04")
+  const affectedActivity = schedule.find((activity) => issue.affectedActivityIds.includes(activity.id))
+  const affectedContract = contracts.find((contract) => issue.affectedContractIds.includes(contract.id))
 
   return (
     <Card className="rounded-lg border-border/70 bg-card py-4 shadow-sm">
@@ -24,16 +24,16 @@ export function IssuePanel({ issue, schedule, contracts }: IssuePanelProps) {
             <p className="mt-1 text-sm font-medium leading-5">{issue.title}</p>
           </div>
           <Badge className="rounded-md bg-red-100 text-red-800 hover:bg-red-100">
-            High
+            {issue.severity}
           </Badge>
         </div>
       </CardHeader>
       <CardContent className="grid gap-3 px-4 text-sm">
         <p className="text-muted-foreground">{issue.description}</p>
         <Separator />
-        <Fact icon={<AlertTriangle aria-hidden="true" />} label="Exposure" value="3-6 days" />
-        <Fact icon={<CalendarDays aria-hidden="true" />} label="Activity" value={affectedActivity?.id ?? "MEP-342"} />
-        <Fact icon={<FileText aria-hidden="true" />} label="Contract" value={affectedContract?.id ?? "MEP-04"} />
+        <Fact icon={<AlertTriangle aria-hidden="true" />} label="Status" value={issue.status} />
+        <Fact icon={<CalendarDays aria-hidden="true" />} label="Activity" value={affectedActivity?.id ?? "Not linked"} />
+        <Fact icon={<FileText aria-hidden="true" />} label="Contract" value={affectedContract?.id ?? "Not linked"} />
       </CardContent>
     </Card>
   )

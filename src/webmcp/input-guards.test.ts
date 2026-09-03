@@ -1,49 +1,24 @@
 import { describe, expect, it } from "vitest"
-
-import {
-  parseEmptyInput,
-  parseEvaluateOptionsInput,
-  parseReviseOptionInput,
-  parseSimulateImpactInput,
-} from "./input-guards"
+import { agentOptions, testContext } from "@/src/test/decision-fixture"
+import { parseConfigureContextInput, parseEmptyInput, parseEvaluateOptionsInput, parseReviseOptionInput, parseSimulateImpactInput } from "./input-guards"
 
 describe("WebMCP runtime input guards", () => {
-  it("accepts only exact schema keys", () => {
-    expect(parseEmptyInput({})).toEqual({})
-    expect(parseEmptyInput({ ignored: true })).toBeNull()
-    expect(parseEvaluateOptionsInput({ expectedStateVersion: 1 })).toEqual({
-      expectedStateVersion: 1,
-    })
-    expect(parseEvaluateOptionsInput({ expectedStateVersion: 1, injected: true })).toBeNull()
-    expect(parseSimulateImpactInput({
-      preserveInspectionMilestone: true,
-      expectedStateVersion: 4,
-    })).not.toBeNull()
-    expect(parseSimulateImpactInput({
-      preserveInspectionMilestone: true,
-      expectedStateVersion: 4,
-      extra: "no",
-    })).toBeNull()
+  it("accepts complete live context and rejects extra keys", () => {
+    const { source: _source, ...context } = testContext
+    expect(parseConfigureContextInput({ ...context, expectedStateVersion: 1 })).not.toBeNull()
+    expect(parseConfigureContextInput({ ...context, expectedStateVersion: 1, injected: true })).toBeNull()
   })
 
-  it("rejects malformed revisions and constraint identities", () => {
-    expect(parseReviseOptionInput({
-      optionId: "OPTION-A",
-      constraintIds: ["CONSTRAINT-12"],
-      expectedOptionRevision: 1,
-      expectedStateVersion: 3,
-    })).not.toBeNull()
-    expect(parseReviseOptionInput({
-      optionId: "OPTION-A",
-      constraintIds: ["CONSTRAINT-12", "CONSTRAINT-13"],
-      expectedOptionRevision: 1,
-      expectedStateVersion: 3,
-    })).toBeNull()
-    expect(parseReviseOptionInput({
-      optionId: "OPTION-A",
-      constraintIds: ["CONSTRAINT-12"],
-      expectedOptionRevision: 1.5,
-      expectedStateVersion: 3,
-    })).toBeNull()
+  it("requires complete agent-authored alternatives", () => {
+    expect(parseEmptyInput({})).toEqual({})
+    expect(parseEvaluateOptionsInput({ expectedStateVersion: 2, options: agentOptions })).not.toBeNull()
+    expect(parseEvaluateOptionsInput({ expectedStateVersion: 2, options: [{ id: "ALT" }] })).toBeNull()
+  })
+
+  it("validates complete revisions and optional mitigation", () => {
+    const { id: _id, ...revision } = agentOptions[0]!
+    expect(parseReviseOptionInput({ optionId: "ALT-NORTH", constraintIds: ["CONSTRAINT-1"], expectedOptionRevision: 1, expectedStateVersion: 4, revision })).not.toBeNull()
+    expect(parseReviseOptionInput({ optionId: "ALT-NORTH", constraintIds: [], expectedOptionRevision: 1, expectedStateVersion: 4, revision })).toBeNull()
+    expect(parseSimulateImpactInput({ expectedStateVersion: 5, mitigation: null })).not.toBeNull()
   })
 })

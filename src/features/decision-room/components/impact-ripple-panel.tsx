@@ -28,6 +28,7 @@ type ImpactRipplePanelProps = {
   simulation: ProjectImpactSimulation | null
   schedule: ScheduleActivity[]
   contracts: Contract[]
+  currency: string
 }
 
 type RippleStep = {
@@ -43,6 +44,7 @@ export function ImpactRipplePanel({
   simulation,
   schedule,
   contracts,
+  currency,
 }: ImpactRipplePanelProps) {
   const [replayCount, setReplayCount] = useState(0)
 
@@ -50,7 +52,7 @@ export function ImpactRipplePanel({
     return null
   }
 
-  const steps = buildRippleSteps(issue, option, simulation, schedule, contracts)
+  const steps = buildRippleSteps(issue, option, simulation, schedule, contracts, currency)
 
   return (
     <Card className="overflow-hidden rounded-lg border-primary/25 bg-card py-4 shadow-sm">
@@ -113,7 +115,7 @@ export function ImpactRipplePanel({
         <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-lg border border-emerald-700/20 bg-emerald-600/8 px-3 py-2 text-xs">
           <span className="flex items-center gap-2 font-medium text-emerald-900">
             <ShieldCheck aria-hidden="true" className="size-4" />
-            Inspection milestone preserved by mitigation
+            {simulation.mitigation ? "Agent mitigation included in calculated impact" : "No mitigation applied; base proposal impact retained"}
           </span>
           <span className="text-muted-foreground">
             Simulation only · approval remains human-controlled
@@ -130,6 +132,7 @@ function buildRippleSteps(
   simulation: ProjectImpactSimulation,
   schedule: ScheduleActivity[],
   contracts: Contract[],
+  currency: string,
 ): RippleStep[] {
   const affectedActivities = issue.affectedActivityIds
     .map((id) => schedule.find((activity) => activity.id === id))
@@ -150,7 +153,7 @@ function buildRippleSteps(
     {
       eyebrow: "Critical path",
       title: firstActivity ? `${firstActivity.id} shifts` : "Installation shifts",
-      detail: `${formatScheduleImpact(simulation.baseScheduleImpactDays)} before mitigation.`,
+      detail: `${formatScheduleImpact(option.scheduleImpactDays)} before mitigation.`,
       icon: <Activity aria-hidden="true" />,
     },
     {
@@ -163,8 +166,8 @@ function buildRippleSteps(
     },
     {
       eyebrow: "Commercial",
-      title: `${formatSignedCurrency(simulation.totalCostImpact)} net change`,
-      detail: `Forecast becomes ${formatCurrency(simulation.projectedBudget)}.`,
+      title: `${formatSignedCurrency(simulation.totalCostImpact, currency)} net change`,
+      detail: `Forecast becomes ${formatCurrency(simulation.projectedBudget, currency)}.`,
       icon: <Banknote aria-hidden="true" />,
     },
     {
@@ -177,23 +180,15 @@ function buildRippleSteps(
 }
 
 function geometryTitle(option: ResolutionOption): string {
-  const action = {
-    reroute: "reroutes D22",
-    resize: "reshapes D22",
-    split: "branches D22",
-  }[option.strategy]
-
-  return `${option.id} r${option.revision} ${action}`
+  return `${option.id} r${option.revision} · ${option.strategy}`
 }
 
 function geometryDetail(option: ResolutionOption): string {
   if (option.constraintIds.length > 0) {
-    return `Clears ${option.constraintIds.join(", ")} on M-204.`
+    return `Clears ${option.constraintIds.join(", ")} on ${option.routeOverlay?.drawingId ?? "the active drawing"}.`
   }
 
-  return {
-    reroute: "Uses the evaluated route on M-204.",
-    resize: "Uses the evaluated resized section on M-204.",
-    split: "Uses the evaluated branch geometry on M-204.",
-  }[option.strategy]
+  return option.routeOverlay
+    ? `Uses the agent-authored route on ${option.routeOverlay.drawingId}.`
+    : "This alternative has no route geometry; its assumptions remain visible for review."
 }

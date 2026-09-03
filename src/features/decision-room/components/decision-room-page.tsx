@@ -1,4 +1,8 @@
 import { useState } from "react"
+import { Sparkles } from "lucide-react"
+
+import { Badge } from "@/components/ui/badge"
+import { Card, CardContent } from "@/components/ui/card"
 
 import { DEFAULT_CONSTRAINT_RECT, getPreviewedOption, type ConstraintDraft, type Rect } from "@/src/domain/decision"
 import { useDecisionRoom } from "../hooks/use-decision-room"
@@ -21,14 +25,14 @@ import { WebMcpStatusPanel } from "./webmcp-status-panel"
 export function DecisionRoomPage() {
   const room = useDecisionRoom()
   const webmcpStatus = useDecisionWebMcp()
-  const [constraintLabel, setConstraintLabel] = useState("Electrical riser")
+  const [constraintLabel, setConstraintLabel] = useState("Field restriction")
   const canAddConstraint = room.phase === "OPTIONS_AVAILABLE"
   const previewedOption = getPreviewedOption(room)
 
   function handleConstraintSubmit(geometry: Rect) {
     if (room.constraints.length > 0) {
       const confirmed = window.confirm(
-        "Replace the existing field constraint CONSTRAINT-12?",
+        `Replace the existing field constraint ${room.constraints[0]?.id}?`,
       )
 
       if (!confirmed) {
@@ -51,10 +55,12 @@ export function DecisionRoomPage() {
           phase={room.phase}
           stateVersion={room.stateVersion}
           projectName={room.project.name}
-          canEvaluate={room.phase === "INVESTIGATING"}
-          onEvaluate={room.evaluateOptions}
+          contextConfigured={room.contextConfigured}
+          contextSource={room.contextSource}
           onReset={room.resetWorkflow}
         />
+
+        {room.contextSource === "starter" ? <StarterProjectBanner /> : null}
 
         <section className="grid gap-4 xl:grid-cols-[minmax(620px,1.35fr)_minmax(420px,0.9fr)]">
           <div className="flex flex-col gap-4">
@@ -64,6 +70,8 @@ export function DecisionRoomPage() {
               elements={room.drawingElements}
               constraints={room.constraints}
               options={room.resolutionOptions}
+              drawing={room.drawings.find((drawing) => drawing.id === room.activeDrawingId) ?? room.drawings[0]}
+              viewBox={room.planViewBox}
               previewOptionId={previewedOption?.id ?? room.resolutionOptions[0]?.id ?? null}
               canCreateConstraint={canAddConstraint}
               onCreateConstraint={handleConstraintSubmit}
@@ -77,6 +85,7 @@ export function DecisionRoomPage() {
               simulation={room.impactSimulation}
               schedule={room.schedule}
               contracts={room.contracts}
+              currency={room.project.currency}
             />
 
             <ConstraintControls
@@ -105,14 +114,15 @@ export function DecisionRoomPage() {
               selectedOptionId={room.selectedOptionId}
               previewOptionId={previewedOption?.id ?? null}
               hasConstraint={room.constraints.length > 0}
+              currency={room.project.currency}
               onPreview={room.previewOption}
-              onRevise={room.reviseOption}
               onReject={room.rejectOption}
               onSelect={room.selectOption}
             />
             <OptionComparisonPanel
               options={room.resolutionOptions}
               selectedOptionId={room.selectedOptionId}
+              currency={room.project.currency}
               onPreview={room.previewOption}
             />
             <ImpactPanel
@@ -126,7 +136,7 @@ export function DecisionRoomPage() {
               phase={room.phase}
               simulation={room.impactSimulation}
               decision={room.decision}
-              onSimulate={() => room.simulateImpact(true)}
+              onSimulate={() => room.simulateImpact(null)}
               onPrepare={room.prepareDecision}
               onApprove={room.approveDecision}
             />
@@ -146,11 +156,26 @@ export function DecisionRoomPage() {
               constraint={room.constraints[0] ?? null}
               simulation={room.impactSimulation}
               changeOrder={room.changeOrder}
+              currency={room.project.currency}
             />
             <ActivityTimeline events={room.activityLog} />
           </div>
         </section>
       </div>
     </main>
+  )
+}
+
+function StarterProjectBanner() {
+  return (
+    <Card className="rounded-lg border-violet-300/60 bg-gradient-to-r from-violet-50 via-card to-cyan-50 py-3 shadow-sm">
+      <CardContent className="flex flex-col gap-3 px-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-start gap-3">
+          <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg bg-violet-600 text-white"><Sparkles aria-hidden="true" className="size-4" /></span>
+          <div><h2 className="font-semibold">Starter project ready</h2><p className="text-sm text-muted-foreground">Ask the agent to create original options for this issue, or replace the context with any project brief. No resolution is preselected or stored.</p></div>
+        </div>
+        <Badge className="w-fit rounded-md bg-violet-600 text-white">Replaceable context</Badge>
+      </CardContent>
+    </Card>
   )
 }

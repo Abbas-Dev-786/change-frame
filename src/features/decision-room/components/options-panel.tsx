@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { CheckCircle2, GitBranch, WandSparkles } from "lucide-react"
+import { Bot, CheckCircle2, GitBranch } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -22,8 +22,8 @@ type OptionsPanelProps = {
   selectedOptionId: OptionId | null
   previewOptionId: OptionId | null
   hasConstraint: boolean
+  currency: string
   onPreview: (optionId: OptionId | null) => void
-  onRevise: (optionId: OptionId) => void
   onReject: (optionId: OptionId, reason: OptionRejectionReason) => void
   onSelect: (optionId: OptionId) => void
 }
@@ -34,8 +34,8 @@ export function OptionsPanel({
   selectedOptionId,
   previewOptionId,
   hasConstraint,
+  currency,
   onPreview,
-  onRevise,
   onReject,
   onSelect,
 }: OptionsPanelProps) {
@@ -49,7 +49,7 @@ export function OptionsPanel({
           Resolution Options
         </h2>
         <Badge variant="outline" className="rounded-md">
-          {options.length}/3
+          {options.length} agent proposal{options.length === 1 ? "" : "s"}
         </Badge>
       </div>
 
@@ -68,10 +68,10 @@ export function OptionsPanel({
             selected={option.id === selectedOptionId}
             previewed={option.id === previewOptionId}
             canSelect={!selectionLocked && isOptionEligibleForSelection(option)}
-            canRevise={hasConstraint && option.strategy === "reroute" && option.status === "needs_revision"}
+            needsAgentRevision={hasConstraint && option.status === "needs_revision"}
+            currency={currency}
             canReject={!rejectionLocked}
             onPreview={onPreview}
-            onRevise={onRevise}
             onReject={onReject}
             onSelect={onSelect}
           />
@@ -86,10 +86,10 @@ function OptionCard({
   selected,
   previewed,
   canSelect,
-  canRevise,
+  needsAgentRevision,
+  currency,
   canReject,
   onPreview,
-  onRevise,
   onReject,
   onSelect,
 }: {
@@ -97,10 +97,10 @@ function OptionCard({
   selected: boolean
   previewed: boolean
   canSelect: boolean
-  canRevise: boolean
+  needsAgentRevision: boolean
+  currency: string
   canReject: boolean
   onPreview: (optionId: OptionId | null) => void
-  onRevise: (optionId: OptionId) => void
   onReject: (optionId: OptionId, reason: OptionRejectionReason) => void
   onSelect: (optionId: OptionId) => void
 }) {
@@ -132,10 +132,16 @@ function OptionCard({
       </CardHeader>
       <CardContent className="grid gap-3 px-4">
         <div className="grid grid-cols-3 gap-2 text-sm">
-          <Metric label="Cost" value={formatSignedCurrency(option.costImpact)} />
+          <Metric label="Cost" value={formatSignedCurrency(option.costImpact, currency)} />
           <Metric label="Schedule" value={formatScheduleImpact(option.scheduleImpactDays)} />
           <Metric label="Risk" value={option.risk} />
         </div>
+        <div className="rounded-lg border border-violet-200/70 bg-violet-50/70 p-3 text-sm">
+          <div className="flex items-center justify-between gap-2"><span className="flex items-center gap-1.5 font-medium text-violet-900"><Bot aria-hidden="true" className="size-4" /> Agent rationale</span><span className="font-mono text-xs text-violet-800">{Math.round(option.confidence * 100)}% confidence</span></div>
+          <p className="mt-1 leading-5 text-violet-950/75">{option.rationale}</p>
+          {option.assumptions.length > 0 ? <p className="mt-2 text-xs text-violet-950/60">Assumptions: {option.assumptions.join(" · ")}</p> : null}
+        </div>
+        {needsAgentRevision ? <p className="text-sm font-medium text-orange-800">Ask the agent to read the new constraint and submit a revised route.</p> : null}
         <div className="flex flex-wrap gap-2">
           <Button
             type="button"
@@ -147,16 +153,6 @@ function OptionCard({
           >
             <CheckCircle2 aria-hidden="true" />
             {selected ? "Selected" : "Select"}
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            className="rounded-lg"
-            disabled={!canRevise}
-            onClick={() => onRevise(option.id)}
-          >
-            <WandSparkles aria-hidden="true" />
-            Revise
           </Button>
           <NativeSelect
             size="sm"

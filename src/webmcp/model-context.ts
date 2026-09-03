@@ -5,12 +5,16 @@ export type JsonPrimitive = string | number | boolean | null
 export type JsonValue = JsonPrimitive | JsonValue[] | { [key: string]: JsonValue }
 
 export type JsonSchema = {
-  type?: string
+  type?: string | readonly string[]
   properties?: Record<string, JsonSchema>
   items?: JsonSchema
   enum?: readonly JsonValue[]
   required?: readonly string[]
   minimum?: number
+  maximum?: number
+  minLength?: number
+  maxLength?: number
+  pattern?: string
   minItems?: number
   maxItems?: number
   uniqueItems?: boolean

@@ -8,9 +8,12 @@ type ErrorAlertProps = {
 }
 
 const errorMessages: Record<ToolErrorCode, string> = {
+  CONTEXT_REQUIRED: "Load a live project brief before asking the agent for alternatives.",
+  INVALID_CONTEXT: "The submitted project context contains missing or inconsistent references.",
+  INVALID_OPTIONS: "The agent proposal failed the decision-room validation rules.",
   INVALID_STATE: "That action is not valid for the current phase.",
   OPTION_NOT_FOUND: "The requested option is not available in the current decision state.",
-  CONSTRAINT_NOT_FOUND: "Create or read CONSTRAINT-12 before revising an option.",
+  CONSTRAINT_NOT_FOUND: "Read the current human constraints before revising an option.",
   OPTION_NOT_SELECTED: "A human-selected option is required before impact simulation.",
   SIMULATION_REQUIRED: "Run impact simulation before preparing the decision.",
   HUMAN_APPROVAL_REQUIRED: "Human approval is required before a change order can be drafted.",

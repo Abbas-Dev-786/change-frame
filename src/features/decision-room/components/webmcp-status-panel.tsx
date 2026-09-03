@@ -55,9 +55,10 @@ type DrawerStyle = CSSProperties & {
 const TOOL_CAPABILITIES: ToolCapability[] = [
   { name: "get_decision_context", label: "Read context", mode: "read" },
   { name: "get_user_constraints", label: "Read constraints", mode: "read" },
-  { name: "evaluate_resolution_options", label: "Evaluate options", mode: "act" },
-  { name: "revise_resolution_option", label: "Revise route", mode: "act" },
-  { name: "simulate_project_impact", label: "Simulate impact", mode: "act" },
+  { name: "configure_decision_context", label: "Build context", mode: "act" },
+  { name: "evaluate_resolution_options", label: "Author options", mode: "act" },
+  { name: "revise_resolution_option", label: "Author revision", mode: "act" },
+  { name: "simulate_project_impact", label: "Calculate impact", mode: "act" },
   { name: "prepare_change_decision", label: "Prepare decision", mode: "act" },
   { name: "draft_change_order", label: "Draft change order", mode: "act" },
 ]
@@ -373,12 +374,16 @@ function nextMoveLabel(phase: DecisionPhase, status: RegistryStatus): string {
     return status.error ?? "Connect a WebMCP-capable browser"
   }
 
+  if (status.registeredTools.includes("configure_decision_context") && !status.registeredTools.includes("evaluate_resolution_options")) {
+    return "Agent can build a decision room from your project brief"
+  }
+
   if (status.registeredTools.includes("evaluate_resolution_options")) {
-    return "Agent can evaluate resolution options"
+    return "Agent can author original, situation-specific alternatives"
   }
 
   if (status.registeredTools.includes("revise_resolution_option")) {
-    return "Agent can revise the constrained route"
+    return "Agent can reason about the constraint and author a revision"
   }
 
   if (status.registeredTools.includes("simulate_project_impact")) {

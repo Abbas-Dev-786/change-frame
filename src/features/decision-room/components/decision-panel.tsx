@@ -38,7 +38,7 @@ export function DecisionPanel({
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-base font-semibold">Decision Summary</h2>
           <Badge variant="outline" className="rounded-md">
-            {decision?.id ?? "DEC-019"}
+            {decision?.id ?? "Not prepared"}
           </Badge>
         </div>
       </CardHeader>

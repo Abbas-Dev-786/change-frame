@@ -1,5 +1,7 @@
 # Build Notes
 
+> Historical note: the deterministic single-scenario MVP below was replaced by the open-ended, agent-authored architecture in September 2026. See `docs/PRD.md` for the current contract.
+
 ## 2026-09-01 — Guided build onboarding started
 
 - Participant wants to brainstorm an exceptional idea with a realistic chance of winning The WebMCP Challenge.

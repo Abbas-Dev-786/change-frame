@@ -1,51 +1,28 @@
-# Submission Readiness
+# ChangeFrame — Submission Draft
 
-This is the local Phase 12 checklist. Deployment, public repository setup, video upload, and Devpost submission remain manual owner actions.
+## One-line pitch
 
-## Pre-deploy checklist
+ChangeFrame lets a browser agent turn any live construction problem into original, inspectable decision alternatives while humans retain control of constraints, selection and approval.
 
-- Run `npm run verify`.
-- Deploy the static build from `dist/`.
-- Confirm the deployed host preserves these headers:
-  - `Origin-Agent-Cluster: ?1`
-  - `Permissions-Policy: tools=(self)`
-- Open the deployed URL in a fresh WebMCP-capable browser session.
-- Complete the five hero-journey repetitions in `docs/EVALS.md`.
+## What makes it different
 
-## Repository checklist
+Most agent demos hide reasoning in chat or replay a prewritten happy path. ChangeFrame starts with one polished, replaceable project context but no answers. The judge can use that project immediately or describe a new conflict during the demo. The browser agent creates original alternatives with assumptions and confidence and draws routes directly into the shared decision room.
 
-- Repository is public.
-- `README.md` explains setup, deployment, WebMCP headers, and verification.
-- `LICENSE` is present.
-- `docs/PRD.md`, `docs/FUTURE_SCOPE.md`, `docs/ARCHITECTURE.md`, and `docs/EVALS.md` are included.
-- The codebase avoids explicit `any` types.
+When the human marks a field constraint, ChangeFrame detects every intersecting route. The agent must observe that state change and author a new revision. The app rejects geometry that still violates the constraint. This creates a visible perceive–reason–act–observe loop rather than a scripted sequence.
 
-## Demo video outline
+## Suggested demo
 
-Suggested 90-second narration:
+1. Open the Riverside Office Tower starter project and emphasize that the context is ready but no resolution is stored or preselected.
+2. Ask the agent for original alternatives immediately, or give it a construction issue that is not stored in the repository.
+3. For the unseen brief, watch `configure_decision_context` replace the project, drawing, issue, schedule and contracts.
+4. Ask for multiple alternatives and compare their original rationales, assumptions and confidence.
+5. Draw a blocked region across one route.
+6. Ask the agent to inspect and revise it; show the geometry validator rejecting a deliberately invalid revision if time permits.
+7. Select an eligible alternative yourself.
+8. Ask the agent for a mitigation and impact calculation.
+9. Ask it to approve; demonstrate that no approval tool exists.
+10. Approve in the UI, then let the agent create a draft change order.
 
-1. Show the active construction issue: HVAC duct D22 conflicts with beam B14.
-2. Ask the agent to inspect context and evaluate three resolution options.
-3. Create the human blocked-region constraint `CONSTRAINT-12`.
-4. Ask the agent to revise the affected option and show the route avoiding the constraint.
-5. Open the Flight Recorder drawer: the previous tool is marked used, the next valid capability activates, and the state-version transition is visible.
-6. Select revised `OPTION-A` as the human project manager.
-7. Ask the agent to simulate cost and schedule impact while preserving inspection.
-8. Ask the agent to prepare the decision, then point out that approval is human-only.
-9. Click `Approve decision`.
-10. Ask the agent to draft the change order and show `CO-007`.
-11. Close by emphasizing dynamic tool availability, shared UI state, and no agent approval/execution authority.
+## Safety story
 
-## Devpost project description draft
-
-ChangeFrame is a WebMCP-native construction decision workspace that lets an AI agent and a human project manager resolve a field coordination conflict together. The app models a realistic HVAC duct versus structural beam issue, exposes phase-specific WebMCP tools, and requires human-only selection and approval before the agent can draft a change order.
-
-The key interaction is not a generic chatbot overlay. The agent reads the same decision room the human sees, materializes deterministic resolution options, reacts to a human-drawn plan constraint, simulates cost/schedule impact, prepares a decision record, and only after explicit human approval drafts `CO-007`. Tool availability changes as the state machine advances, so the agent cannot skip ahead or approve on the human's behalf.
-
-## Final manual submission tasks
-
-- Add deployed app URL.
-- Add public repository URL.
-- Add public demo video URL.
-- Include a short note that synthetic project data is intentionally deterministic for eval repeatability.
-- Confirm no deferred future-scope feature is presented as shipped.
+The agent proposes; ChangeFrame verifies; the human authorizes. Agent-generated estimates never become hidden facts. Rationale, assumptions, confidence, geometry and state provenance remain inspectable. No tool can sign, issue, authorize or execute a contractual change.

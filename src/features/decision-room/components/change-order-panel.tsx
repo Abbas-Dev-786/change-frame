@@ -45,7 +45,7 @@ export function ChangeOrderPanel({
           <div className="flex items-center justify-between gap-3">
             <h2 className="text-base font-semibold">Change Order Draft</h2>
             <Badge variant="outline" className="rounded-md">
-              CO-007
+              {decision ? `For ${decision.id}` : "Human approval required"}
             </Badge>
           </div>
         </CardHeader>
@@ -57,7 +57,7 @@ export function ChangeOrderPanel({
             <EmptyHeader>
               <EmptyTitle>No draft yet</EmptyTitle>
               <EmptyDescription>
-                After DEC-019 is approved by the project manager, the workspace can generate the draft change order.
+                After the prepared decision is approved by the project manager, the workspace can generate a draft change order.
               </EmptyDescription>
             </EmptyHeader>
             <Button
@@ -109,7 +109,7 @@ export function ChangeOrderPanel({
             <ArtifactRow label="Approved option" value={decision?.optionId ?? "Unavailable"} />
             <ArtifactRow label="Reason" value={changeOrder.reason} />
             <ArtifactRow label="Scope" value={changeOrder.scope} />
-            <ArtifactRow label="Cost impact" value={formatSignedCurrency(changeOrder.costImpact)} />
+            <ArtifactRow label="Cost impact" value={formatSignedCurrency(changeOrder.costImpact, project.currency)} />
             <ArtifactRow label="Schedule impact" value={formatScheduleImpact(changeOrder.scheduleImpactDays)} />
             <ArtifactRow label="Affected contract" value={affectedContract} />
           </dl>
@@ -120,10 +120,10 @@ export function ChangeOrderPanel({
 }
 
 function formatAffectedContract(contracts: Contract[]): string {
-  const contract = contracts.find((candidate) => candidate.id === "MEP-04")
+  const contract = contracts[0]
 
   if (!contract) {
-    return "MEP-04"
+    return "No contract linked"
   }
 
   return `${contract.id} — ${contract.contractor}`

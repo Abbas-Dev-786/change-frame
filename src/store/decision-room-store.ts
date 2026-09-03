@@ -1,13 +1,9 @@
 import { create } from "zustand"
-
+import { recordHumanDecisionAction, recordHumanWorkflowReset } from "@/src/observability/agent-flight-recorder"
 import {
-  recordHumanDecisionAction,
-  recordHumanWorkflowReset,
-} from "@/src/observability/agent-flight-recorder"
-
-import {
-  createInitialDecisionState,
   approveDecisionByHuman,
+  configureDecisionContext,
+  createInitialDecisionState,
   draftChangeOrder,
   evaluateResolutionOptions,
   prepareChangeDecision,
@@ -18,9 +14,12 @@ import {
   setPreviewOption,
   simulateProjectImpact,
   upsertHumanConstraint,
+  type AgentMitigationProposal,
   type ConstraintDraft,
+  type DecisionContextInput,
   type DecisionRoomState,
   type DomainResult,
+  type EvaluateOptionsInput,
   type ExpectedVersionInput,
   type OptionId,
   type OptionRejectionReason,
@@ -28,16 +27,15 @@ import {
   type SimulateImpactInput,
 } from "@/src/domain/decision"
 
-const STORAGE_KEY = "changedecision-os:decision-room:v2"
-const STORAGE_SCHEMA_VERSION = 2
+const STORAGE_KEY = "changeframe:decision-room:v4"
+const STORAGE_SCHEMA_VERSION = 4
 
 type DecisionRoomActions = {
-  evaluateOptions: () => void
+  configureContext: (input: Omit<DecisionContextInput, "expectedStateVersion">) => void
   upsertConstraint: (draft: ConstraintDraft) => void
-  reviseOption: (optionId: OptionId) => void
   rejectOption: (optionId: OptionId, reason: OptionRejectionReason) => void
   selectOption: (optionId: OptionId) => void
-  simulateImpact: (preserveInspectionMilestone: boolean) => void
+  simulateImpact: (mitigation?: AgentMitigationProposal | null) => void
   prepareDecision: () => void
   approveDecision: () => void
   draftChangeOrder: () => void
@@ -49,108 +47,96 @@ export type DecisionRoomStore = DecisionRoomState & DecisionRoomActions
 
 export const useDecisionRoomStore = create<DecisionRoomStore>((set, get) => ({
   ...loadSavedState(),
-  evaluateOptions: () => {
-    const currentState = readCurrentState(get())
-    const result = evaluateResolutionOptions(currentState, {
-      expectedStateVersion: currentState.stateVersion,
-    })
-
-    commitHumanResult(set, "evaluate_options", "Generated the supported resolution options.", currentState, result)
+  configureContext: (input) => {
+    const current = readCurrentState(get())
+    commitHumanResult(set, "configure_context", "Configured the live project context.", current, configureDecisionContext(current, { ...input, expectedStateVersion: current.stateVersion }))
   },
   upsertConstraint: (draft) => {
-    const currentState = readCurrentState(get())
-    const result = upsertHumanConstraint(currentState, draft)
-
-    commitHumanResult(set, "upsert_constraint", "Added the field constraint to the shared plan.", currentState, result)
-  },
-  reviseOption: (optionId) => {
-    const currentState = readCurrentState(get())
-    const option = currentState.resolutionOptions.find((candidate) => candidate.id === optionId)
-
-    if (!option) {
-      return
-    }
-
-    const result = reviseResolutionOption(currentState, {
-      optionId,
-      expectedOptionRevision: option.revision,
-      expectedStateVersion: currentState.stateVersion,
-    })
-
-    commitHumanResult(set, "revise_option", `Revised ${optionId} from the human interface.`, currentState, result)
+    const current = readCurrentState(get())
+    commitHumanResult(set, "upsert_constraint", "Added the field constraint to the shared plan.", current, upsertHumanConstraint(current, draft))
   },
   rejectOption: (optionId, reason) => {
-    const currentState = readCurrentState(get())
-    const result = rejectResolutionOption(currentState, {
-      optionId,
-      reason,
-    })
-
-    commitHumanResult(set, "reject_option", `Rejected ${optionId}.`, currentState, result)
+    const current = readCurrentState(get())
+    commitHumanResult(set, "reject_option", `Rejected ${optionId}.`, current, rejectResolutionOption(current, { optionId, reason }))
   },
   selectOption: (optionId) => {
-    const currentState = readCurrentState(get())
-    const result = selectResolutionOption(currentState, optionId)
-
-    commitHumanResult(set, "select_option", `Selected ${optionId} as the human reviewer.`, currentState, result)
+    const current = readCurrentState(get())
+    commitHumanResult(set, "select_option", `Selected ${optionId} as the human reviewer.`, current, selectResolutionOption(current, optionId))
   },
-  simulateImpact: (preserveInspectionMilestone) => {
-    const currentState = readCurrentState(get())
-    const result = simulateProjectImpact(currentState, {
-      preserveInspectionMilestone,
-      expectedStateVersion: currentState.stateVersion,
-    })
-
-    commitHumanResult(set, "simulate_impact", "Ran project impact simulation from the human interface.", currentState, result)
+  simulateImpact: (mitigation = null) => {
+    const current = readCurrentState(get())
+    commitHumanResult(set, "simulate_impact", "Calculated impact from the selected agent proposal.", current, simulateProjectImpact(current, { mitigation, expectedStateVersion: current.stateVersion }))
   },
   prepareDecision: () => {
-    const currentState = readCurrentState(get())
-    const result = prepareChangeDecision(currentState, {
-      expectedStateVersion: currentState.stateVersion,
-    })
-
-    commitHumanResult(set, "prepare_decision", "Prepared the decision from the human interface.", currentState, result)
+    const current = readCurrentState(get())
+    commitHumanResult(set, "prepare_decision", "Prepared the decision for review.", current, prepareChangeDecision(current, { expectedStateVersion: current.stateVersion }))
   },
   approveDecision: () => {
-    const currentState = readCurrentState(get())
-    const result = approveDecisionByHuman(currentState)
-
-    commitHumanResult(set, "approve_decision", "Approved DEC-019 at the protected human checkpoint.", currentState, result)
+    const current = readCurrentState(get())
+    commitHumanResult(set, "approve_decision", `Approved ${current.decision?.id ?? "the decision"} at the protected human checkpoint.`, current, approveDecisionByHuman(current))
   },
   draftChangeOrder: () => {
-    const currentState = readCurrentState(get())
-    const result = draftChangeOrder(currentState, {
-      expectedStateVersion: currentState.stateVersion,
-    })
-
-    commitHumanResult(set, "draft_change_order", "Drafted CO-007 from the human interface.", currentState, result)
+    const current = readCurrentState(get())
+    commitHumanResult(set, "draft_change_order", "Drafted a change order from the approved decision.", current, draftChangeOrder(current, { expectedStateVersion: current.stateVersion }))
   },
-  previewOption: (optionId) => {
-    const nextState = setPreviewOption(readCurrentState(get()), optionId)
-    set({ previewOptionId: nextState.previewOptionId })
-  },
+  previewOption: (optionId) => set({ previewOptionId: setPreviewOption(readCurrentState(get()), optionId).previewOptionId }),
   resetWorkflow: () => {
-    const currentState = readCurrentState(get())
+    const current = readCurrentState(get())
     clearSavedState()
-    const nextState = resetDecisionRoom(
-      currentState,
-      () => createInitialDecisionState(new Date().toISOString()),
-    )
-    commitDecisionRoomState(set, nextState)
-    recordHumanWorkflowReset(currentState.stateVersion, nextState.stateVersion)
+    const next = resetDecisionRoom(current, () => createInitialDecisionState(new Date().toISOString()))
+    commitDecisionRoomState(set, next)
+    recordHumanWorkflowReset(current.stateVersion, next.stateVersion)
   },
 }))
+
+export function getDecisionRoomState(): DecisionRoomState { return readCurrentState(useDecisionRoomStore.getState()) }
+
+export function runDecisionToolAction(action:
+  | { type: "configure_context"; input: DecisionContextInput }
+  | { type: "evaluate_options"; input: EvaluateOptionsInput }
+  | { type: "revise_option"; input: RevisionInput }
+  | { type: "simulate_impact"; input: SimulateImpactInput }
+  | { type: "prepare_decision"; input: ExpectedVersionInput }
+  | { type: "draft_change_order"; input: ExpectedVersionInput }
+): DomainResult {
+  const state = getDecisionRoomState()
+  const result = executeToolAction(state, action)
+  if (result.success) commitDecisionRoomState(useDecisionRoomStore.setState, result.state)
+  return result
+}
+
+function executeToolAction(state: DecisionRoomState, action:
+  | { type: "configure_context"; input: DecisionContextInput }
+  | { type: "evaluate_options"; input: EvaluateOptionsInput }
+  | { type: "revise_option"; input: RevisionInput }
+  | { type: "simulate_impact"; input: SimulateImpactInput }
+  | { type: "prepare_decision"; input: ExpectedVersionInput }
+  | { type: "draft_change_order"; input: ExpectedVersionInput }
+): DomainResult {
+  switch (action.type) {
+    case "configure_context": return configureDecisionContext(state, action.input)
+    case "evaluate_options": return evaluateResolutionOptions(state, action.input)
+    case "revise_option": return reviseResolutionOption(state, action.input)
+    case "simulate_impact": return simulateProjectImpact(state, action.input)
+    case "prepare_decision": return prepareChangeDecision(state, action.input)
+    case "draft_change_order": return draftChangeOrder(state, action.input)
+  }
+}
 
 function readCurrentState(store: DecisionRoomStore): DecisionRoomState {
   return {
     phase: store.phase,
     stateVersion: store.stateVersion,
+    contextConfigured: store.contextConfigured,
+    contextSource: store.contextSource,
     project: store.project,
     activeIssue: store.activeIssue,
     drawings: store.drawings,
     drawingElements: store.drawingElements,
     schedule: store.schedule,
     contracts: store.contracts,
+    baselineConstraints: store.baselineConstraints,
+    planViewBox: store.planViewBox,
     activeDrawingId: store.activeDrawingId,
     constraints: store.constraints,
     resolutionOptions: store.resolutionOptions,
@@ -164,244 +150,84 @@ function readCurrentState(store: DecisionRoomStore): DecisionRoomState {
   }
 }
 
-export function getDecisionRoomState(): DecisionRoomState {
-  return readCurrentState(useDecisionRoomStore.getState())
+function commitDecisionRoomState(set: (state: Partial<DecisionRoomStore>) => void, state: DecisionRoomState): void {
+  writeSavedState(state); set(state)
 }
 
-export function runDecisionToolAction(
-  action:
-    | { type: "evaluate_options"; input: ExpectedVersionInput }
-    | { type: "revise_option"; input: RevisionInput }
-    | { type: "simulate_impact"; input: SimulateImpactInput }
-    | { type: "prepare_decision"; input: ExpectedVersionInput }
-    | { type: "draft_change_order"; input: ExpectedVersionInput },
-): DomainResult {
-  const state = getDecisionRoomState()
-  const result = executeToolAction(state, action)
-
-  if (result.success) {
-    commitDecisionRoomState(useDecisionRoomStore.setState, result.state)
-  }
-
-  return result
-}
-
-function executeToolAction(
-  state: DecisionRoomState,
-  action:
-    | { type: "evaluate_options"; input: ExpectedVersionInput }
-    | { type: "revise_option"; input: RevisionInput }
-    | { type: "simulate_impact"; input: SimulateImpactInput }
-    | { type: "prepare_decision"; input: ExpectedVersionInput }
-    | { type: "draft_change_order"; input: ExpectedVersionInput },
-): DomainResult {
-  switch (action.type) {
-    case "evaluate_options":
-      return evaluateResolutionOptions(state, action.input)
-    case "revise_option":
-      return reviseResolutionOption(state, action.input)
-    case "simulate_impact":
-      return simulateProjectImpact(state, action.input)
-    case "prepare_decision":
-      return prepareChangeDecision(state, action.input)
-    case "draft_change_order":
-      return draftChangeOrder(state, action.input)
-  }
-}
-
-function commitDecisionRoomState(
-  set: (state: Partial<DecisionRoomStore>) => void,
-  state: DecisionRoomState,
-): void {
-  writeSavedState(state)
-  set(state)
-}
-
-function commitHumanResult(
-  set: (state: Partial<DecisionRoomStore>) => void,
-  action: string,
-  label: string,
-  currentState: DecisionRoomState,
-  result: DomainResult,
-): void {
-  commitDecisionRoomState(set, result.state)
-  recordHumanDecisionAction(action, label, currentState.stateVersion, result)
+function commitHumanResult(set: (state: Partial<DecisionRoomStore>) => void, action: string, label: string, current: DecisionRoomState, result: DomainResult): void {
+  commitDecisionRoomState(set, result.state); recordHumanDecisionAction(action, label, current.stateVersion, result)
 }
 
 function loadSavedState(): DecisionRoomState {
-  if (typeof window === "undefined") {
-    return createInitialDecisionState()
-  }
-
+  if (typeof window === "undefined") return createInitialDecisionState()
   try {
-    const savedValue = window.sessionStorage.getItem(STORAGE_KEY)
-
-    if (!savedValue) {
-      return createInitialDecisionState()
-    }
-
-    const parsedValue: unknown = JSON.parse(savedValue)
-
-    if (
-      isRecord(parsedValue) &&
-      parsedValue.schemaVersion === STORAGE_SCHEMA_VERSION &&
-      isDecisionRoomState(parsedValue.state)
-    ) {
-      return normalizeSavedState(parsedValue.state)
-    }
+    const saved = window.sessionStorage.getItem(STORAGE_KEY)
+    if (!saved) return createInitialDecisionState()
+    const parsed: unknown = JSON.parse(saved)
+    if (isRecord(parsed) && parsed.schemaVersion === STORAGE_SCHEMA_VERSION && isDecisionRoomState(parsed.state)) return parsed.state
   } catch {
-    try {
-      window.sessionStorage.removeItem(STORAGE_KEY)
-    } catch {
-      // Storage can be disabled; the in-memory workflow remains usable.
-    }
+    try { window.sessionStorage.removeItem(STORAGE_KEY) } catch { /* in-memory mode remains available */ }
   }
-
   return createInitialDecisionState()
 }
 
-function normalizeSavedState(state: DecisionRoomState): DecisionRoomState {
-  return {
-    ...state,
-    resolutionOptions: state.resolutionOptions.map((option) => ({
-      ...option,
-      rejectionReason: option.rejectionReason ?? null,
-    })),
-  }
-}
-
 function writeSavedState(state: DecisionRoomState): void {
-  if (typeof window === "undefined") {
-    return
-  }
-
-  try {
-    window.sessionStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({ schemaVersion: STORAGE_SCHEMA_VERSION, state }),
-    )
-  } catch {
-    // Storage failure must not prevent an otherwise valid local state transition.
-  }
+  if (typeof window === "undefined") return
+  try { window.sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ schemaVersion: STORAGE_SCHEMA_VERSION, state })) } catch { /* in-memory mode remains available */ }
 }
 
 function clearSavedState(): void {
-  if (typeof window === "undefined") {
-    return
-  }
-
-  try {
-    window.sessionStorage.removeItem(STORAGE_KEY)
-  } catch {
-    // Storage can be unavailable in privacy-restricted contexts.
-  }
+  if (typeof window === "undefined") return
+  try { window.sessionStorage.removeItem(STORAGE_KEY) } catch { /* storage can be unavailable */ }
 }
 
 function isDecisionRoomState(value: unknown): value is DecisionRoomState {
-  if (!isRecord(value)) {
-    return false
-  }
-
-  return (
-    isDecisionPhase(value.phase) &&
-    Number.isInteger(value.stateVersion) &&
-    typeof value.stateVersion === "number" &&
-    value.stateVersion >= 1 &&
-    isRecord(value.project) && value.project.id === "PROJECT-01" &&
-    isRecord(value.activeIssue) && value.activeIssue.id === "ISS-019" &&
-    Array.isArray(value.drawings) &&
-    Array.isArray(value.drawingElements) &&
-    Array.isArray(value.schedule) &&
-    Array.isArray(value.contracts) &&
-    value.activeDrawingId === "M-204" &&
+  if (!isRecord(value)) return false
+  return isDecisionPhase(value.phase) && Number.isInteger(value.stateVersion) &&
+    typeof value.contextConfigured === "boolean" && ["starter", "human", "agent"].includes(String(value.contextSource)) &&
+    isProject(value.project) && isIssue(value.activeIssue) && isRecordList(value.drawings) &&
+    isRecordList(value.drawingElements) && isRecordList(value.schedule) && isRecordList(value.contracts) &&
+    isRecordList(value.baselineConstraints) && isViewBox(value.planViewBox) && typeof value.activeDrawingId === "string" &&
     Array.isArray(value.constraints) && value.constraints.every(isConstraint) &&
     Array.isArray(value.resolutionOptions) && value.resolutionOptions.every(isResolutionOption) &&
-    (value.selectedOptionId === null || isOptionId(value.selectedOptionId)) &&
-    (value.previewOptionId === null || isOptionId(value.previewOptionId)) &&
+    (value.selectedOptionId === null || typeof value.selectedOptionId === "string") &&
+    (value.previewOptionId === null || typeof value.previewOptionId === "string") &&
     (value.impactSimulation === null || isRecord(value.impactSimulation)) &&
-    (value.decision === null || isDecision(value.decision)) &&
-    (value.changeOrder === null || isRecord(value.changeOrder)) &&
-    Array.isArray(value.activityLog) && value.activityLog.every(isActivityEvent) &&
-    (value.lastError === null || isToolErrorCode(value.lastError))
-  )
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null
+    (value.decision === null || isRecord(value.decision)) && (value.changeOrder === null || isRecord(value.changeOrder)) &&
+    Array.isArray(value.activityLog) && value.activityLog.every((event) => isRecord(event) && typeof event.id === "string" && typeof event.label === "string" && typeof event.detail === "string")
 }
 
 function isDecisionPhase(value: unknown): boolean {
-  return [
-    "INVESTIGATING",
-    "OPTIONS_AVAILABLE",
-    "OPTION_SELECTED",
-    "IMPACT_SIMULATED",
-    "READY_FOR_APPROVAL",
-    "APPROVED",
-    "CHANGE_ORDER_DRAFTED",
-  ].includes(String(value))
+  return ["INVESTIGATING", "OPTIONS_AVAILABLE", "OPTION_SELECTED", "IMPACT_SIMULATED", "READY_FOR_APPROVAL", "APPROVED", "CHANGE_ORDER_DRAFTED"].includes(String(value))
 }
 
-function isOptionId(value: unknown): value is OptionId {
-  return value === "OPTION-A" || value === "OPTION-B" || value === "OPTION-C"
+function isProject(value: unknown): boolean {
+  return isRecord(value) && typeof value.id === "string" && typeof value.name === "string" && isFiniteNumber(value.budget) && isFiniteNumber(value.currentForecast) && typeof value.currency === "string"
+}
+
+function isIssue(value: unknown): boolean {
+  return isRecord(value) && typeof value.id === "string" && typeof value.title === "string" && typeof value.description === "string" && typeof value.drawingId === "string" && Array.isArray(value.elementIds) && Array.isArray(value.affectedActivityIds) && Array.isArray(value.affectedContractIds)
+}
+
+function isViewBox(value: unknown): boolean {
+  return isRecord(value) && isFiniteNumber(value.width) && value.width >= 100 && isFiniteNumber(value.height) && value.height >= 100
 }
 
 function isConstraint(value: unknown): boolean {
-  if (!isRecord(value) || value.id !== "CONSTRAINT-12" || !isRecord(value.geometry)) {
-    return false
-  }
-
-  const geometry = value.geometry
-
-  return ["x", "y", "width", "height"].every(
-    (key) => typeof geometry[key] === "number" && Number.isFinite(geometry[key]),
-  )
+  return isRecord(value) && typeof value.id === "string" && typeof value.label === "string" && isRect(value.geometry)
 }
 
 function isResolutionOption(value: unknown): boolean {
-  return (
-    isRecord(value) &&
-    isOptionId(value.id) &&
-    ["reroute", "resize", "split"].includes(String(value.strategy)) &&
-    typeof value.revision === "number" && Number.isInteger(value.revision) && value.revision >= 1 &&
-    ["available", "needs_revision", "revised", "rejected", "selected"].includes(String(value.status)) &&
-    typeof value.fingerprint === "string"
-  )
+  return isRecord(value) && typeof value.id === "string" && typeof value.title === "string" && typeof value.description === "string" && typeof value.strategy === "string" && typeof value.rationale === "string" && Array.isArray(value.assumptions) && value.assumptions.every((item) => typeof item === "string") && isFiniteNumber(value.confidence) && isFiniteNumber(value.costImpact) && isFiniteNumber(value.scheduleImpactDays) && (value.routeOverlay === null || (isRecord(value.routeOverlay) && Array.isArray(value.routeOverlay.points)))
 }
 
-function isDecision(value: unknown): boolean {
-  return (
-    isRecord(value) &&
-    value.id === "DEC-019" &&
-    isOptionId(value.optionId) &&
-    typeof value.optionRevision === "number" &&
-    Number.isInteger(value.optionRevision) &&
-    value.optionRevision >= 1
-  )
+function isRect(value: unknown): boolean {
+  return isRecord(value) && isFiniteNumber(value.x) && isFiniteNumber(value.y) && isFiniteNumber(value.width) && isFiniteNumber(value.height)
 }
 
-function isActivityEvent(value: unknown): boolean {
-  return (
-    isRecord(value) &&
-    typeof value.id === "string" &&
-    typeof value.type === "string" &&
-    typeof value.label === "string" &&
-    typeof value.detail === "string" &&
-    typeof value.createdAt === "string"
-  )
+function isRecordList(value: unknown): value is Record<string, unknown>[] {
+  return Array.isArray(value) && value.every(isRecord)
 }
 
-function isToolErrorCode(value: unknown): boolean {
-  return [
-    "INVALID_STATE",
-    "OPTION_NOT_FOUND",
-    "CONSTRAINT_NOT_FOUND",
-    "OPTION_NOT_SELECTED",
-    "SIMULATION_REQUIRED",
-    "HUMAN_APPROVAL_REQUIRED",
-    "STATE_CONFLICT",
-    "OPTION_REVISION_CONFLICT",
-    "INVALID_CONSTRAINT_GEOMETRY",
-    "UNSUPPORTED_CONSTRAINT_GEOMETRY",
-  ].includes(String(value))
-}
+function isFiniteNumber(value: unknown): value is number { return typeof value === "number" && Number.isFinite(value) }
+function isRecord(value: unknown): value is Record<string, unknown> { return typeof value === "object" && value !== null && !Array.isArray(value) }

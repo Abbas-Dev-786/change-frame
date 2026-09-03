@@ -19,6 +19,7 @@ type DecisionReceiptPanelProps = {
   constraint: Constraint | null
   simulation: ProjectImpactSimulation | null
   changeOrder: ChangeOrder | null
+  currency: string
 }
 
 export function DecisionReceiptPanel({
@@ -27,6 +28,7 @@ export function DecisionReceiptPanel({
   constraint,
   simulation,
   changeOrder,
+  currency,
 }: DecisionReceiptPanelProps) {
   const recorder = useAgentFlightRecorder()
 
@@ -76,7 +78,7 @@ export function DecisionReceiptPanel({
           <dl className="mt-4 grid gap-2 sm:grid-cols-2">
             <ReceiptFact label="Geometry input" value={constraint ? `${constraint.id}: ${constraint.label}` : "No field constraint"} />
             <ReceiptFact label="Resolution input" value={`${option.strategy} · revision ${decision.optionRevision}`} />
-            <ReceiptFact label="Cost result" value={formatSignedCurrency(decision.costImpact)} />
+            <ReceiptFact label="Cost result" value={formatSignedCurrency(decision.costImpact, currency)} />
             <ReceiptFact label="Schedule result" value={formatScheduleImpact(decision.scheduleImpactDays)} />
             <ReceiptFact label="Simulation" value={simulation.id} />
             <ReceiptFact label="Artifact" value={changeOrder ? `${changeOrder.id} · draft` : "Not drafted"} />
@@ -100,7 +102,7 @@ export function DecisionReceiptPanel({
             <div>
               <p className="font-medium">Execution boundary</p>
               <p className="text-xs text-muted-foreground">
-                {changeOrder ? "CO-007 is a draft only; no contract was executed." : "No contract artifact has been executed."}
+                {changeOrder ? `${changeOrder.id} is a draft only; no contract was executed.` : "No contract artifact has been executed."}
               </p>
             </div>
           </div>

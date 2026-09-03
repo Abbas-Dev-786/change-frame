@@ -1,11 +1,11 @@
-import { PLAN_VIEWBOX } from "./fixtures"
-import type { Point, Rect, RouteOverlay } from "./types"
+import { PLAN_VIEWBOX } from "./initial-state"
+import type { PlanViewBox, Point, Rect, RouteOverlay } from "./types"
 
-export function clampRectToPlan(rect: Rect): Rect {
-  const width = Math.max(24, Math.min(rect.width, PLAN_VIEWBOX.width))
-  const height = Math.max(24, Math.min(rect.height, PLAN_VIEWBOX.height))
-  const x = Math.max(0, Math.min(rect.x, PLAN_VIEWBOX.width - width))
-  const y = Math.max(0, Math.min(rect.y, PLAN_VIEWBOX.height - height))
+export function clampRectToPlan(rect: Rect, viewBox: PlanViewBox = PLAN_VIEWBOX): Rect {
+  const width = Math.max(24, Math.min(rect.width, viewBox.width))
+  const height = Math.max(24, Math.min(rect.height, viewBox.height))
+  const x = Math.max(0, Math.min(rect.x, viewBox.width - width))
+  const y = Math.max(0, Math.min(rect.y, viewBox.height - height))
 
   return {
     x: Math.round(x),
@@ -15,13 +15,13 @@ export function clampRectToPlan(rect: Rect): Rect {
   }
 }
 
-export function normalizeRect(start: Point, end: Point): Rect {
+export function normalizeRect(start: Point, end: Point, viewBox: PlanViewBox = PLAN_VIEWBOX): Rect {
   return clampRectToPlan({
     x: Math.min(start.x, end.x),
     y: Math.min(start.y, end.y),
     width: Math.abs(end.x - start.x),
     height: Math.abs(end.y - start.y),
-  })
+  }, viewBox)
 }
 
 export function routeIntersectsRect(route: RouteOverlay, rect: Rect): boolean {

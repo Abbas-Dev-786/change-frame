@@ -1,4 +1,4 @@
-import { Route, RotateCcw } from "lucide-react";
+import { Bot, RotateCcw } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -19,8 +19,8 @@ type DecisionHeaderProps = {
   phase: DecisionPhase;
   stateVersion: number;
   projectName: string;
-  canEvaluate: boolean;
-  onEvaluate: () => void;
+  contextConfigured: boolean;
+  contextSource: "starter" | "human" | "agent";
   onReset: () => void;
 };
 
@@ -28,8 +28,8 @@ export function DecisionHeader({
   phase,
   stateVersion,
   projectName,
-  canEvaluate,
-  onEvaluate,
+  contextConfigured,
+  contextSource,
   onReset,
 }: DecisionHeaderProps) {
   return (
@@ -53,7 +53,7 @@ export function DecisionHeader({
             </span>
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
-            {projectName} - Level 4 Decision Room
+            {contextConfigured ? `${projectName} · ${contextSource === "starter" ? "Replaceable starter project" : "Live Decision Room"}` : "Open-ended agent workspace"}
           </p>
         </div>
 
@@ -67,15 +67,10 @@ export function DecisionHeader({
             <RotateCcw aria-hidden="true" />
             Reset workflow
           </Button>
-          <Button
-            type="button"
-            className="rounded-lg"
-            disabled={!canEvaluate}
-            onClick={onEvaluate}
-          >
-            <Route aria-hidden="true" />
-            Evaluate options
-          </Button>
+          <Badge variant="outline" className="gap-1.5 rounded-lg border-violet-300 bg-violet-50 px-3 py-2 text-violet-800">
+            <Bot aria-hidden="true" className="size-4" />
+            Agent-authored options
+          </Badge>
         </div>
       </CardContent>
     </Card>

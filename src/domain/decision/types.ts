@@ -16,12 +16,23 @@ export type DrawingElementType =
   | "corridor"
   | "room"
   | "wall"
+  | "pipe"
+  | "cable_tray"
+  | "equipment"
+  | "generic"
 
-export type Trade = "mechanical" | "structural" | "electrical" | "architectural"
+export type Trade =
+  | "mechanical"
+  | "structural"
+  | "electrical"
+  | "architectural"
+  | "plumbing"
+  | "fire_protection"
+  | "civil"
+  | "general"
 
-export type OptionId = "OPTION-A" | "OPTION-B" | "OPTION-C"
-
-export type ConstraintId = "CONSTRAINT-12"
+export type OptionId = string
+export type ConstraintId = string
 
 export type ResolutionStatus =
   | "available"
@@ -40,6 +51,7 @@ export type OptionRejectionReason =
 export type RiskLevel = "low" | "medium" | "high"
 
 export type ActivityEventType =
+  | "context_configured"
   | "issue_loaded"
   | "options_evaluated"
   | "constraint_upserted"
@@ -54,7 +66,10 @@ export type ActivityEventType =
   | "workflow_reset"
 
 export type ToolErrorCode =
+  | "CONTEXT_REQUIRED"
+  | "INVALID_CONTEXT"
   | "INVALID_STATE"
+  | "INVALID_OPTIONS"
   | "OPTION_NOT_FOUND"
   | "CONSTRAINT_NOT_FOUND"
   | "OPTION_NOT_SELECTED"
@@ -65,80 +80,92 @@ export type ToolErrorCode =
   | "INVALID_CONSTRAINT_GEOMETRY"
   | "UNSUPPORTED_CONSTRAINT_GEOMETRY"
 
-export type Point = {
-  x: number
-  y: number
-}
-
-export type Rect = {
-  x: number
-  y: number
-  width: number
-  height: number
-}
+export type Point = { x: number; y: number }
+export type Rect = { x: number; y: number; width: number; height: number }
+export type PlanViewBox = { width: number; height: number }
 
 export type Project = {
-  id: "PROJECT-01"
-  name: "Riverside Office Tower"
+  id: string
+  name: string
   budget: number
   currentForecast: number
+  currency: string
 }
 
 export type Drawing = {
-  id: "M-204" | "S-202" | "A-201"
+  id: string
   name: string
   discipline: Trade
   level: string
 }
 
 export type DrawingElement = {
-  id: "DUCT-D22" | "BEAM-B14" | "RISER-E04" | "CORRIDOR-C3" | "ROOM-M401"
+  id: string
   type: DrawingElementType
   label: string
-  drawingId: Drawing["id"]
+  drawingId: string
   geometry: Rect
   trade: Trade
 }
 
 export type Issue = {
-  id: "ISS-019"
+  id: string
   title: string
   description: string
   severity: Severity
-  status: "Decision Required"
-  drawingId: "M-204"
+  status: string
+  drawingId: string
   location: string
-  elementIds: DrawingElement["id"][]
+  elementIds: string[]
   affectedActivityIds: string[]
   affectedContractIds: string[]
 }
+
+export type BaselineConstraint = { id: string; type: string; label: string }
 
 export type Constraint = {
   id: ConstraintId
   type: "blocked_region"
   label: string
   source: "human"
-  drawingId: "M-204"
+  drawingId: string
   geometry: Rect
-  appliesTo: ["mechanical_route"]
+  appliesTo: string[]
   createdAt: string
   updatedAt: string
 }
 
 export type RouteOverlay = {
   id: string
-  drawingId: "M-204"
+  drawingId: string
   points: Point[]
   label: string
 }
 
-export type ResolutionOption = {
-  id: OptionId
-  strategy: "reroute" | "resize" | "split"
+export type AgentOptionProposal = {
+  id: string
+  strategy: string
   title: string
   description: string
+  rationale: string
+  assumptions: string[]
+  confidence: number
+  costImpact: number
+  scheduleImpactDays: number
+  risk: RiskLevel
+  route: { label: string; points: Point[] } | null
+}
+
+export type ResolutionOption = {
+  id: OptionId
+  strategy: string
+  title: string
+  description: string
+  rationale: string
+  assumptions: string[]
+  confidence: number
   revision: number
-  routeOverlay: RouteOverlay
+  routeOverlay: RouteOverlay | null
   costImpact: number
   scheduleImpactDays: number
   risk: RiskLevel
@@ -146,6 +173,7 @@ export type ResolutionOption = {
   status: ResolutionStatus
   rejectionReason: OptionRejectionReason | null
   fingerprint: string
+  authoredBy: "agent"
 }
 
 export type ScheduleActivity = {
@@ -166,21 +194,22 @@ export type Contract = {
   value: number
 }
 
-export type Mitigation = {
-  id: "MIT-001"
-  type: "additional_mechanical_crew"
-  label: "Add second MEP crew"
+export type AgentMitigationProposal = {
+  id: string
+  type: string
+  label: string
+  rationale: string
   additionalCost: number
   daysRecovered: number
+  confidence: number
 }
 
+export type Mitigation = AgentMitigationProposal & { authoredBy: "agent" }
+
 export type ProjectImpactSimulation = {
-  id: "SIM-019"
+  id: string
   optionId: OptionId
   optionRevision: number
-  preserveInspectionMilestone: boolean
-  baseChangeCost: number
-  baseScheduleImpactDays: number
   mitigation: Mitigation | null
   totalCostImpact: number
   finalScheduleImpactDays: number
@@ -189,11 +218,11 @@ export type ProjectImpactSimulation = {
 }
 
 export type Decision = {
-  id: "DEC-019"
-  issueId: "ISS-019"
+  id: string
+  issueId: string
   optionId: OptionId
   optionRevision: number
-  mitigationId: Mitigation["id"] | null
+  mitigationId: string | null
   costImpact: number
   scheduleImpactDays: number
   status: "READY_FOR_APPROVAL" | "APPROVED"
@@ -203,8 +232,8 @@ export type Decision = {
 }
 
 export type ChangeOrder = {
-  id: "CO-007"
-  decisionId: "DEC-019"
+  id: string
+  decisionId: string
   reason: string
   scope: string
   costImpact: number
@@ -224,13 +253,17 @@ export type ActivityEvent = {
 export type DecisionRoomState = {
   phase: DecisionPhase
   stateVersion: number
+  contextConfigured: boolean
+  contextSource: "starter" | "human" | "agent"
   project: Project
   activeIssue: Issue
   drawings: Drawing[]
   drawingElements: DrawingElement[]
   schedule: ScheduleActivity[]
   contracts: Contract[]
-  activeDrawingId: "M-204"
+  baselineConstraints: BaselineConstraint[]
+  planViewBox: PlanViewBox
+  activeDrawingId: string
   constraints: Constraint[]
   resolutionOptions: ResolutionOption[]
   selectedOptionId: OptionId | null
@@ -242,12 +275,23 @@ export type DecisionRoomState = {
   lastError: ToolErrorCode | null
 }
 
-export type DomainSuccess = {
-  success: true
-  state: DecisionRoomState
-  changed: boolean
+export type DecisionContextInput = Pick<
+  DecisionRoomState,
+  | "project"
+  | "activeIssue"
+  | "drawings"
+  | "drawingElements"
+  | "schedule"
+  | "contracts"
+  | "baselineConstraints"
+  | "planViewBox"
+  | "activeDrawingId"
+> & {
+  expectedStateVersion: number
+  source: "human" | "agent"
 }
 
+export type DomainSuccess = { success: true; state: DecisionRoomState; changed: boolean }
 export type DomainFailure = {
   success: false
   state: DecisionRoomState
@@ -255,5 +299,4 @@ export type DomainFailure = {
   message: string
   retryable: boolean
 }
-
 export type DomainResult = DomainSuccess | DomainFailure
