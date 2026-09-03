@@ -11,9 +11,9 @@
 - Strategic constraint: avoid the crowded generic shopping-assistant pattern; prefer a workflow where shared browser state, dynamic tools, and human approval are central.
 - Round 2 expansion: explore niche, high-consequence industry workflows beyond e-commerce and domains. Selection filter: the page should be a live operational surface, tool availability should change with workflow state, and irreversible actions should require explicit human approval.
 
-## 2026-09-02 — ChangeDecision OS PRD validation and scope lock
+## 2026-09-02 — ChangeFrame PRD validation and scope lock
 
-- Selected concept: ChangeDecision OS, a WebMCP-native construction decision workspace for resolving an HVAC duct and structural beam conflict.
+- Selected concept: ChangeFrame, a WebMCP-native construction decision workspace for resolving an HVAC duct and structural beam conflict.
 - Active-shaping note: participant asked to fix the validation findings and explicitly requested a separate future-scope file so deferred tools do not inflate the MVP.
 - MVP decision: seven non-overlapping WebMCP tools, one canonical state machine, human-only option selection and approval, deterministic synthetic geometry, and no backend.
 - Deferred granular analysis, integrations, multi-project behavior, exports, and advanced drawing capabilities to `docs/FUTURE_SCOPE.md`.

@@ -13,12 +13,12 @@
     "display_name": "Abbas Bhanpura Wala"
   },
   "project": {
-    "name": "",
-    "summary": "",
-    "ai_usage": "",
-    "codex_usage": ""
+    "name": "ChangeFrame",
+    "summary": "A WebMCP decision room where humans set constraints and approve outcomes while agents evaluate options, simulate impact, and draft the change.",
+    "ai_usage": "A browser agent discovers phase-specific WebMCP tools, reads shared decision state, evaluates and revises options, simulates project impact, prepares the decision, and drafts the change order only after human approval.",
+    "codex_usage": "Codex supported product scoping, PRD development, implementation, debugging, deterministic and browser-level testing, production hardening, documentation, and submission preparation."
   },
-  "current_stage": "resources",
+  "current_stage": "prepare-submission",
   "completed_stages": [
     "start-hackathon",
     "review",
@@ -34,7 +34,7 @@
   },
   "submission": {
     "draft_file": "devpost-submission.md",
-    "status": "not-started"
+    "status": "drafting"
   },
-  "next_command": "build-scope"
+  "next_command": "prepare-submission"
 }

@@ -38,7 +38,7 @@ Suggested 90-second narration:
 
 ## Devpost project description draft
 
-ChangeDecision OS is a WebMCP-native construction decision workspace that lets an AI agent and a human project manager resolve a field coordination conflict together. The app models a realistic HVAC duct versus structural beam issue, exposes phase-specific WebMCP tools, and requires human-only selection and approval before the agent can draft a change order.
+ChangeFrame is a WebMCP-native construction decision workspace that lets an AI agent and a human project manager resolve a field coordination conflict together. The app models a realistic HVAC duct versus structural beam issue, exposes phase-specific WebMCP tools, and requires human-only selection and approval before the agent can draft a change order.
 
 The key interaction is not a generic chatbot overlay. The agent reads the same decision room the human sees, materializes deterministic resolution options, reacts to a human-drawn plan constraint, simulates cost/schedule impact, prepares a decision record, and only after explicit human approval drafts `CO-007`. Tool availability changes as the state machine advances, so the agent cannot skip ahead or approve on the human's behalf.
 

@@ -1,4 +1,4 @@
-# ChangeDecision OS Architecture
+# ChangeFrame Architecture
 
 The application is a source-level modular monolith. It deploys as one static web application while keeping domain policy, browser integration, React state adaptation, and presentation separated.
 

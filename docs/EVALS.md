@@ -1,4 +1,4 @@
-# ChangeDecision OS Eval Plan
+# ChangeFrame Eval Plan
 
 This file tracks the Phase 10 test and eval gate for the WebMCP Challenge MVP.
 

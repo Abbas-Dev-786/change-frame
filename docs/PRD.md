@@ -1,4 +1,4 @@
-# ChangeDecision OS — Product Requirements Document
+# ChangeFrame — Product Requirements Document
 
 **Version:** 1.3  
 **Status:** MVP Scope Locked — Validated for Build  
@@ -13,11 +13,11 @@
 
 # 1. Executive Summary
 
-ChangeDecision OS is an agent-native construction decision room where project teams and AI agents investigate project changes together, explore resolution alternatives, understand cost and schedule consequences, and prepare approved change decisions for downstream execution.
+ChangeFrame is an agent-native construction decision room where project teams and AI agents investigate project changes together, explore resolution alternatives, understand cost and schedule consequences, and prepare approved change decisions for downstream execution.
 
 Traditional construction software records issues, RFIs, schedule changes, budget impacts, and change orders across separate workflows.
 
-ChangeDecision OS focuses on the missing layer between:
+ChangeFrame focuses on the missing layer between:
 
 **“A problem was discovered.”**
 
@@ -46,13 +46,13 @@ Both operate on the same live application state.
 
 This is the central WebMCP thesis of the product.
 
-WebMCP allows websites to expose structured tools directly to browser agents through `document.modelContext`, giving agents explicit actions instead of forcing them to infer UI interactions from mouse clicks and DOM structure. 
+WebMCP allows websites to expose structured tools directly to browser agents through `document.modelContext`, giving agents explicit actions instead of forcing them to infer UI interactions from mouse clicks and DOM structure.
 
 ---
 
 # 2. Hackathon Thesis
 
-ChangeDecision OS should demonstrate that WebMCP enables a category of software beyond:
+ChangeFrame should demonstrate that WebMCP enables a category of software beyond:
 
 - chatbot embedded in SaaS
 - agent controlling a website through clicks
@@ -68,18 +68,18 @@ The critical interaction is:
 
 **Human changes visual application state → agent discovers that updated state → agent invokes structured WebMCP tools → application visibly changes → human reviews or overrides → agent continues from the new state.**
 
-The official WebMCP Challenge emphasizes originality, execution, usefulness, thoughtful WebMCP use, and the quality of the human-agent experience. 
+The official WebMCP Challenge emphasizes originality, execution, usefulness, thoughtful WebMCP use, and the quality of the human-agent experience.
 
 Therefore, the MVP must optimize for:
 
-| Criterion | Product Response |
-|---|---|
-| WebMCP Leverage | Deep structured tool integration with live app state |
-| Execution | One polished end-to-end workflow |
-| Potential Impact | Real construction change-decision problem |
-| Creativity & Ambition | Shared construction decision room |
-| Human-Agent Experience | Continuous collaborative loop |
-| Demo Strength | Highly visual plan manipulation and impact simulation |
+| Criterion              | Product Response                                      |
+| ---------------------- | ----------------------------------------------------- |
+| WebMCP Leverage        | Deep structured tool integration with live app state  |
+| Execution              | One polished end-to-end workflow                      |
+| Potential Impact       | Real construction change-decision problem             |
+| Creativity & Ambition  | Shared construction decision room                     |
+| Human-Agent Experience | Continuous collaborative loop                         |
+| Demo Strength          | Highly visual plan manipulation and impact simulation |
 
 ---
 
@@ -99,7 +99,7 @@ Traditional construction software:
 
 **tracks what happened.**
 
-ChangeDecision OS:
+ChangeFrame:
 
 **helps the project team decide what should happen next.**
 
@@ -199,9 +199,9 @@ The workflow problem is supported by existing construction practice and research
 - [Autodesk Construction Cloud's Potential Change Order guidance](https://help.autodesk.com/cloudhelp/ENU/Build-Cost/files/change-orders/Cost_Potential_Change_Orders.html) describes a PCO as the starting point of a budget or cost change, allows it to originate from an RFI, issue, or submittal, and links cost items to affected budgets, contracts, and suppliers.
 - A peer-reviewed [study of 95 new public-school projects](https://oasis.library.unlv.edu/fac_articles/629/) analyzed change orders to quantify cost and schedule growth and assess their effect on both outcomes.
 
-These sources validate that construction changes cross scope, cost, schedule, and contract workflows. They do not by themselves validate product-market fit for ChangeDecision OS.
+These sources validate that construction changes cross scope, cost, schedule, and contract workflows. They do not by themselves validate product-market fit for ChangeFrame.
 
-ChangeDecision OS is not intended to replace Procore, Autodesk Construction Cloud, or another system of record. Those platforms capture and administer change artifacts. This MVP focuses on the preceding decision interval: investigating a field issue, comparing supported resolutions, incorporating human context, understanding consequences, and deciding which resolution should become a downstream change artifact.
+ChangeFrame is not intended to replace Procore, Autodesk Construction Cloud, or another system of record. Those platforms capture and administer change artifacts. This MVP focuses on the preceding decision interval: investigating a field issue, comparing supported resolutions, incorporating human context, understanding consequences, and deciding which resolution should become a downstream change artifact.
 
 ---
 
@@ -441,7 +441,7 @@ draft_change_order()
 
 The browser agent operates using these structured contracts.
 
-Chrome describes WebMCP's goal as making agent actuation more accurate and reliable by exposing structured site capabilities rather than requiring simulated user interaction. 
+Chrome describes WebMCP's goal as making agent actuation more accurate and reliable by exposing structured site capabilities rather than requiring simulated user interaction.
 
 The agent path must not depend on clicking visual controls. Option selection and approval are deliberate exceptions because they are reserved for the human rather than alternative agent actuation paths.
 
@@ -455,7 +455,7 @@ The MVP is primarily **one screen**.
 
 ```text
 ┌───────────────────────────────────────────────────────────────┐
-│ ChangeDecision OS                     Riverside Office Tower  │
+│ ChangeFrame                     Riverside Office Tower  │
 ├────────────────────────────────┬──────────────────────────────┤
 │                                │ ISSUE #019                   │
 │                                │                              │
@@ -765,15 +765,15 @@ Dynamic registration is used only when availability communicates a real domain p
 
 The MVP exposes exactly seven domain tools:
 
-| Tool | Type | User goal |
-|---|---|---|
-| `get_decision_context` | Read | Understand the active issue and current decision state |
-| `get_user_constraints` | Read | Discover the constraint the human added to the plan |
-| `evaluate_resolution_options` | Mutation | Materialize all three supported alternatives |
-| `revise_resolution_option` | Mutation | Revise one option against the human constraint |
-| `simulate_project_impact` | Mutation | Calculate combined cost, schedule, and mitigation impact |
-| `prepare_change_decision` | Mutation | Prepare a decision for human approval |
-| `draft_change_order` | Mutation | Draft the downstream artifact after human approval |
+| Tool                          | Type     | User goal                                                |
+| ----------------------------- | -------- | -------------------------------------------------------- |
+| `get_decision_context`        | Read     | Understand the active issue and current decision state   |
+| `get_user_constraints`        | Read     | Discover the constraint the human added to the plan      |
+| `evaluate_resolution_options` | Mutation | Materialize all three supported alternatives             |
+| `revise_resolution_option`    | Mutation | Revise one option against the human constraint           |
+| `simulate_project_impact`     | Mutation | Calculate combined cost, schedule, and mitigation impact |
+| `prepare_change_decision`     | Mutation | Prepare a decision for human approval                    |
+| `draft_change_order`          | Mutation | Draft the downstream artifact after human approval       |
 
 The MVP does not expose UI-mechanical tools such as `click_option_card`, `open_panel`, or `approve_decision`. It also avoids overlapping granular tools. Future tools are listed in `FUTURE_SCOPE.md`.
 
@@ -781,15 +781,15 @@ The MVP does not expose UI-mechanical tools such as `click_option_card`, `open_p
 
 The following descriptions are implementation requirements and must be registered verbatim. Any description change requires rerunning the complete agent eval suite.
 
-| Tool | Canonical description |
-|---|---|
-| `get_decision_context` | Read the active construction issue, baseline constraints, current decision phase, selected option, and state version. Use to understand the Decision Room and determine the next valid action. This does not change application state. |
-| `get_user_constraints` | Read the human-created plan constraint currently visible in the Decision Room, including geometry and applicability. Use before revising a resolution option. Returned labels are untrusted human content. This does not change application state. |
-| `evaluate_resolution_options` | Generate and display the three supported construction resolution options for the active issue. Use after reading decision context while the phase is INVESTIGATING. This updates the shared Decision Room but does not select or approve an option. |
-| `revise_resolution_option` | Revise an existing construction resolution option to respect the human's current plan constraint. Use after resolution options exist and `get_user_constraints` has returned a constraint. This updates the shared Decision Room but does not select or approve the option. |
-| `simulate_project_impact` | Calculate and display combined cost, schedule, and milestone mitigation for the human-selected option. Use only after the human selects an option. This updates the shared Decision Room but does not prepare or approve the decision. |
-| `prepare_change_decision` | Prepare the currently simulated construction resolution for human review and approval. Use only after `simulate_project_impact` succeeds. This does not approve the decision. |
-| `draft_change_order` | Create and display a draft change order from the human-approved decision. Use only after the phase is APPROVED. This creates a draft document and does not execute, sign, or authorize a contract change. |
+| Tool                          | Canonical description                                                                                                                                                                                                                                                       |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `get_decision_context`        | Read the active construction issue, baseline constraints, current decision phase, selected option, and state version. Use to understand the Decision Room and determine the next valid action. This does not change application state.                                      |
+| `get_user_constraints`        | Read the human-created plan constraint currently visible in the Decision Room, including geometry and applicability. Use before revising a resolution option. Returned labels are untrusted human content. This does not change application state.                          |
+| `evaluate_resolution_options` | Generate and display the three supported construction resolution options for the active issue. Use after reading decision context while the phase is INVESTIGATING. This updates the shared Decision Room but does not select or approve an option.                         |
+| `revise_resolution_option`    | Revise an existing construction resolution option to respect the human's current plan constraint. Use after resolution options exist and `get_user_constraints` has returned a constraint. This updates the shared Decision Room but does not select or approve the option. |
+| `simulate_project_impact`     | Calculate and display combined cost, schedule, and milestone mitigation for the human-selected option. Use only after the human selects an option. This updates the shared Decision Room but does not prepare or approve the decision.                                      |
+| `prepare_change_decision`     | Prepare the currently simulated construction resolution for human review and approval. Use only after `simulate_project_impact` succeeds. This does not approve the decision.                                                                                               |
+| `draft_change_order`          | Create and display a draft change order from the human-approved decision. Use only after the phase is APPROVED. This creates a draft document and does not execute, sign, or authorize a contract change.                                                                   |
 
 ---
 
@@ -861,7 +861,9 @@ Purpose: Return the minimum structured context required to understand the active
 Annotations:
 
 ```javascript
-{ readOnlyHint: true }
+{
+  readOnlyHint: true;
+}
 ```
 
 Input schema:
@@ -878,7 +880,11 @@ Example `data`:
 
 ```json
 {
-  "project": { "id": "PROJECT-01", "name": "Riverside Office Tower", "budget": 8420000 },
+  "project": {
+    "id": "PROJECT-01",
+    "name": "Riverside Office Tower",
+    "budget": 8420000
+  },
   "issue": {
     "id": "ISS-019",
     "title": "HVAC duct conflicts with structural beam B14",
@@ -887,7 +893,11 @@ Example `data`:
     "location": "Level 4 Mechanical Room / Corridor C"
   },
   "baselineConstraints": [
-    { "id": "BASE-01", "type": "fixed_element", "label": "Beam B14 cannot move" }
+    {
+      "id": "BASE-01",
+      "type": "fixed_element",
+      "label": "Beam B14 cannot move"
+    }
   ],
   "phase": "INVESTIGATING",
   "selectedOptionId": null
@@ -959,7 +969,10 @@ Input schema:
 {
   "type": "object",
   "properties": {
-    "optionId": { "type": "string", "enum": ["OPTION-A", "OPTION-B", "OPTION-C"] },
+    "optionId": {
+      "type": "string",
+      "enum": ["OPTION-A", "OPTION-B", "OPTION-C"]
+    },
     "constraintIds": {
       "type": "array",
       "items": { "type": "string", "enum": ["CONSTRAINT-12"] },
@@ -970,7 +983,12 @@ Input schema:
     "expectedOptionRevision": { "type": "integer", "minimum": 1 },
     "expectedStateVersion": { "type": "integer", "minimum": 0 }
   },
-  "required": ["optionId", "constraintIds", "expectedOptionRevision", "expectedStateVersion"],
+  "required": [
+    "optionId",
+    "constraintIds",
+    "expectedOptionRevision",
+    "expectedStateVersion"
+  ],
   "additionalProperties": false
 }
 ```
@@ -1097,30 +1115,30 @@ CHANGE_ORDER_DRAFTED
 
 Tool availability:
 
-| Phase | Available tools |
-|---|---|
-| All phases | `get_decision_context`, `get_user_constraints` |
-| `INVESTIGATING` | `evaluate_resolution_options` |
-| `OPTIONS_AVAILABLE` | `revise_resolution_option` when a human constraint exists |
-| `OPTION_SELECTED` | `simulate_project_impact` |
-| `IMPACT_SIMULATED` | `prepare_change_decision` |
-| `READY_FOR_APPROVAL` | Read tools only; wait for the human |
-| `APPROVED` | `draft_change_order` |
-| `CHANGE_ORDER_DRAFTED` | Read tools only |
+| Phase                  | Available tools                                           |
+| ---------------------- | --------------------------------------------------------- |
+| All phases             | `get_decision_context`, `get_user_constraints`            |
+| `INVESTIGATING`        | `evaluate_resolution_options`                             |
+| `OPTIONS_AVAILABLE`    | `revise_resolution_option` when a human constraint exists |
+| `OPTION_SELECTED`      | `simulate_project_impact`                                 |
+| `IMPACT_SIMULATED`     | `prepare_change_decision`                                 |
+| `READY_FOR_APPROVAL`   | Read tools only; wait for the human                       |
+| `APPROVED`             | `draft_change_order`                                      |
+| `CHANGE_ORDER_DRAFTED` | Read tools only                                           |
 
 Rollback transitions are deterministic:
 
-| Event | Previous phase | Result phase | MVP reachability |
-|---|---|---|---|
-| Add or replace constraint | `OPTIONS_AVAILABLE` | `OPTIONS_AVAILABLE` | Human UI and domain action |
-| Add or replace constraint | `OPTION_SELECTED` | `OPTIONS_AVAILABLE` | Defensive domain action only |
-| Add or replace constraint | `IMPACT_SIMULATED` | `OPTIONS_AVAILABLE` | Defensive domain action only |
-| Add or replace constraint | `READY_FOR_APPROVAL` | `OPTIONS_AVAILABLE` | Defensive domain action only |
-| Revise an option | Any pre-approval phase in which that option exists | `OPTIONS_AVAILABLE` | Human path starts from `OPTIONS_AVAILABLE`; later phases are defensive |
-| Select an option | `OPTIONS_AVAILABLE` | `OPTION_SELECTED` | Human UI only |
-| Change selected option | `OPTION_SELECTED` | `OPTION_SELECTED` | Human UI only |
-| Change selected option | `IMPACT_SIMULATED` | `OPTION_SELECTED` | Human UI only |
-| Reset workflow | Any phase | `INVESTIGATING` | Human UI only |
+| Event                     | Previous phase                                     | Result phase        | MVP reachability                                                       |
+| ------------------------- | -------------------------------------------------- | ------------------- | ---------------------------------------------------------------------- |
+| Add or replace constraint | `OPTIONS_AVAILABLE`                                | `OPTIONS_AVAILABLE` | Human UI and domain action                                             |
+| Add or replace constraint | `OPTION_SELECTED`                                  | `OPTIONS_AVAILABLE` | Defensive domain action only                                           |
+| Add or replace constraint | `IMPACT_SIMULATED`                                 | `OPTIONS_AVAILABLE` | Defensive domain action only                                           |
+| Add or replace constraint | `READY_FOR_APPROVAL`                               | `OPTIONS_AVAILABLE` | Defensive domain action only                                           |
+| Revise an option          | Any pre-approval phase in which that option exists | `OPTIONS_AVAILABLE` | Human path starts from `OPTIONS_AVAILABLE`; later phases are defensive |
+| Select an option          | `OPTIONS_AVAILABLE`                                | `OPTION_SELECTED`   | Human UI only                                                          |
+| Change selected option    | `OPTION_SELECTED`                                  | `OPTION_SELECTED`   | Human UI only                                                          |
+| Change selected option    | `IMPACT_SIMULATED`                                 | `OPTION_SELECTED`   | Human UI only                                                          |
+| Reset workflow            | Any phase                                          | `INVESTIGATING`     | Human UI only                                                          |
 
 Constraint editing is deliberately unavailable through the UI after `OPTIONS_AVAILABLE`. Selection editing is unavailable from `READY_FOR_APPROVAL` onward. After `APPROVED`, every constraint, option, simulation, decision, and change-order edit is forbidden except full reset.
 
@@ -1557,26 +1575,26 @@ These features increase engineering risk without materially improving the WebMCP
 
 The product is not submission-ready unless every P0 criterion passes.
 
-| ID | Requirement | Acceptance criterion |
-|---|---|---|
-| P0.1 | Initial Decision Room | A fresh session loads `ISS-019` in `INVESTIGATING` and visibly shows duct D22 intersecting beam B14. |
-| P0.2 | Browser capability | A supported browser registers exactly the valid phase tools; an unsupported browser shows a notice while the human UI continues to work. |
-| P0.3 | Context retrieval | `get_decision_context` returns the canonical project, issue, fixed-beam constraint, phase, and current `stateVersion` without mutation. |
-| P0.4 | Option generation | One `evaluate_resolution_options` call creates exactly three option cards and overlay models before resolving. One route is emphasized, the others are faint, and hover/focus changes preview without selection. An exact stale replay returns `STATE_CONFLICT` without changes; a defensive valid-state upsert creates no duplicates. |
-| P0.5 | Human annotation | In `OPTIONS_AVAILABLE`, pointer and keyboard-coordinate flows can create one labeled blocked rectangle within the plan bounds. Replacement updates `CONSTRAINT-12` in place, preserves `createdAt`, refreshes `updatedAt`, and never allocates another ID. The visible rectangle and central state match; controls are read-only afterward. |
-| P0.6 | Shared constraint state | `get_user_constraints` immediately returns the human constraint with stable ID `CONSTRAINT-12`, sanitized label, drawing, geometry, applicability, `createdAt`, and `updatedAt`. |
-| P0.7 | Constraint-aware revision | Revising Option A produces revision 2, removes revision 1, renders Corridor C East, geometrically avoids the blocked rectangle, and updates impact to `$5,300` and `+1 day`. |
-| P0.8 | Derived-state rollback | Every event in the rollback table clears the specified downstream data and lands in its exact result phase; the UI and registered tool set match that phase. |
-| P0.9 | Human selection | Only a human UI action selects revised Option A and moves the phase to `OPTION_SELECTED`; no selection WebMCP tool exists. |
-| P0.10 | Combined simulation | `simulate_project_impact` with milestone preservation returns `$5,300 + $1,200 = $6,500`, recovers one day, produces `0` final delay, and updates projected budget to `$8,426,500`. |
-| P0.11 | Decision preparation | `prepare_change_decision` creates `DEC-019`, displays `READY FOR APPROVAL`, and leaves `approvedAt` empty. |
-| P0.12 | Human approval | The approval control is enabled only in `READY_FOR_APPROVAL`; a human click records approval and exposes `draft_change_order`. |
-| P0.13 | Change-order draft | After approval, `draft_change_order` upserts `CO-007` and renders an HTML draft with the approved scope, `$6,500`, `0 days`, and `DEC-019`. |
-| P0.14 | Coherence, concurrency, and retry safety | A mutation resolves only after domain state, visible UI, and registry agree. Stale replays return `STATE_CONFLICT` with zero side effects; valid current-state re-executions and upserts create no duplicates. |
-| P0.15 | Reload and reset | Reload restores valid same-tab session state. **Reset workflow** clears it and returns to the canonical `INVESTIGATING` state with the correct tool registry. |
-| P0.16 | Accessibility | The complete human path is keyboard operable, has visible focus, text labels for status, accessible plan equivalents, and no color-only meaning. |
-| P0.17 | Supported deployment | The public HTTPS URL completes five consecutive hero runs in ChatGPT's in-app browser; Chrome with WebMCP enabled is also smoke-tested when available. |
-| P0.18 | Submission package | Public repository, detectable open-source license, setup/testing instructions, public narrated YouTube video under three minutes, and final Devpost submission are complete. |
+| ID    | Requirement                              | Acceptance criterion                                                                                                                                                                                                                                                                                                                        |
+| ----- | ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| P0.1  | Initial Decision Room                    | A fresh session loads `ISS-019` in `INVESTIGATING` and visibly shows duct D22 intersecting beam B14.                                                                                                                                                                                                                                        |
+| P0.2  | Browser capability                       | A supported browser registers exactly the valid phase tools; an unsupported browser shows a notice while the human UI continues to work.                                                                                                                                                                                                    |
+| P0.3  | Context retrieval                        | `get_decision_context` returns the canonical project, issue, fixed-beam constraint, phase, and current `stateVersion` without mutation.                                                                                                                                                                                                     |
+| P0.4  | Option generation                        | One `evaluate_resolution_options` call creates exactly three option cards and overlay models before resolving. One route is emphasized, the others are faint, and hover/focus changes preview without selection. An exact stale replay returns `STATE_CONFLICT` without changes; a defensive valid-state upsert creates no duplicates.      |
+| P0.5  | Human annotation                         | In `OPTIONS_AVAILABLE`, pointer and keyboard-coordinate flows can create one labeled blocked rectangle within the plan bounds. Replacement updates `CONSTRAINT-12` in place, preserves `createdAt`, refreshes `updatedAt`, and never allocates another ID. The visible rectangle and central state match; controls are read-only afterward. |
+| P0.6  | Shared constraint state                  | `get_user_constraints` immediately returns the human constraint with stable ID `CONSTRAINT-12`, sanitized label, drawing, geometry, applicability, `createdAt`, and `updatedAt`.                                                                                                                                                            |
+| P0.7  | Constraint-aware revision                | Revising Option A produces revision 2, removes revision 1, renders Corridor C East, geometrically avoids the blocked rectangle, and updates impact to `$5,300` and `+1 day`.                                                                                                                                                                |
+| P0.8  | Derived-state rollback                   | Every event in the rollback table clears the specified downstream data and lands in its exact result phase; the UI and registered tool set match that phase.                                                                                                                                                                                |
+| P0.9  | Human selection                          | Only a human UI action selects revised Option A and moves the phase to `OPTION_SELECTED`; no selection WebMCP tool exists.                                                                                                                                                                                                                  |
+| P0.10 | Combined simulation                      | `simulate_project_impact` with milestone preservation returns `$5,300 + $1,200 = $6,500`, recovers one day, produces `0` final delay, and updates projected budget to `$8,426,500`.                                                                                                                                                         |
+| P0.11 | Decision preparation                     | `prepare_change_decision` creates `DEC-019`, displays `READY FOR APPROVAL`, and leaves `approvedAt` empty.                                                                                                                                                                                                                                  |
+| P0.12 | Human approval                           | The approval control is enabled only in `READY_FOR_APPROVAL`; a human click records approval and exposes `draft_change_order`.                                                                                                                                                                                                              |
+| P0.13 | Change-order draft                       | After approval, `draft_change_order` upserts `CO-007` and renders an HTML draft with the approved scope, `$6,500`, `0 days`, and `DEC-019`.                                                                                                                                                                                                 |
+| P0.14 | Coherence, concurrency, and retry safety | A mutation resolves only after domain state, visible UI, and registry agree. Stale replays return `STATE_CONFLICT` with zero side effects; valid current-state re-executions and upserts create no duplicates.                                                                                                                              |
+| P0.15 | Reload and reset                         | Reload restores valid same-tab session state. **Reset workflow** clears it and returns to the canonical `INVESTIGATING` state with the correct tool registry.                                                                                                                                                                               |
+| P0.16 | Accessibility                            | The complete human path is keyboard operable, has visible focus, text labels for status, accessible plan equivalents, and no color-only meaning.                                                                                                                                                                                            |
+| P0.17 | Supported deployment                     | The public HTTPS URL completes five consecutive hero runs in ChatGPT's in-app browser; Chrome with WebMCP enabled is also smoke-tested when available.                                                                                                                                                                                      |
+| P0.18 | Submission package                       | Public repository, detectable open-source license, setup/testing instructions, public narrated YouTube video under three minutes, and final Devpost submission are complete.                                                                                                                                                                |
 
 ## Deferred Work
 
@@ -1590,7 +1608,7 @@ Evaluation must establish whether an agent understands:
 
 - when to call a tool
 - how to execute it
-- whether the resulting answer/action is acceptable. 
+- whether the resulting answer/action is acceptable.
 
 Use deterministic tests for domain/tool behavior and repeated agent evals for probabilistic tool selection. A single manual success is not a pass.
 
@@ -1748,7 +1766,7 @@ Expected result: one `CO-007` draft appears and clearly remains a draft.
 
 Use Chrome's WebMCP tooling to inspect registered tools and test invocation during development.
 
-Chrome DevTools now includes WebMCP debugging support in the Application tooling, and Chrome's developer tooling can list and execute exposed WebMCP tools. 
+Chrome DevTools now includes WebMCP debugging support in the Application tooling, and Chrome's developer tooling can list and execute exposed WebMCP tools.
 
 Development checklist:
 
@@ -1824,7 +1842,7 @@ Humans must be able to manually:
 - understand impact
 - approve final decision
 
-WebMCP is progressive enhancement rather than a replacement for the human web interface. 
+WebMCP is progressive enhancement rather than a replacement for the human web interface.
 
 The app should therefore still function as coherent construction software without an agent attached.
 
@@ -1998,7 +2016,7 @@ Change order appears.
 
 Narration:
 
-> “The agent didn't click through our UI or work in a separate chatbot. ChangeDecision exposes construction capabilities directly through WebMCP. The human supplies judgment and authority; the agent handles investigation, simulation and execution. Both work on the same live decision.”
+> “The agent didn't click through our UI or work in a separate chatbot. ChangeFrame exposes construction capabilities directly through WebMCP. The human supplies judgment and authority; the agent handles investigation, simulation, and drafting. Both work on the same live decision.”
 
 End.
 
@@ -2021,9 +2039,9 @@ An agent needs access to semantic entities such as:
 
 Traditional browser automation forces the agent to infer these states through visual or DOM interaction.
 
-ChangeDecision exposes them directly as structured WebMCP tools while keeping the human inside the same live interface.
+ChangeFrame exposes them directly as structured WebMCP tools while keeping the human inside the same live interface.
 
-The product's differentiation is the decision layer before the change order: existing systems already connect issues and RFIs to cost, schedule, budget, contract, and PCO workflows; ChangeDecision demonstrates how a human and browser agent can collaboratively determine the resolution that should enter those workflows.
+The product's differentiation is the decision layer before the change order: existing systems already connect issues and RFIs to cost, schedule, budget, contract, and PCO workflows; ChangeFrame demonstrates how a human and browser agent can collaboratively determine the resolution that should enter those workflows.
 
 ---
 
@@ -2081,7 +2099,7 @@ The MVP succeeds when:
 
 # 44. Definition of Done
 
-ChangeDecision OS is ready to submit only when the following loop works reliably:
+ChangeFrame is ready to submit only when the following loop works reliably:
 
 ```text
 Human opens issue
@@ -2202,7 +2220,7 @@ If the answer is no:
 
 # 47. Product Thesis
 
-> **ChangeDecision OS turns construction change management from an administrative workflow into a shared decision environment where humans provide judgment and authority while agents investigate alternatives, simulate consequences, and execute the resulting decision through structured WebMCP tools.**
+> **ChangeFrame turns construction change management from an administrative workflow into a shared decision environment where humans provide judgment and authority while agents investigate alternatives, simulate consequences, and execute the resulting decision through structured WebMCP tools.**
 
 That is the product.
 

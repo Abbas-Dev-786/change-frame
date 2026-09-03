@@ -8,7 +8,7 @@
 
 ## Project Idea
 
-- Selected idea: ChangeDecision OS, a WebMCP-native construction decision workspace where a project manager and browser agent resolve a construction conflict using shared live application state.
+- Selected idea: ChangeFrame, a WebMCP-native construction decision workspace where a project manager and browser agent resolve a construction conflict using shared live application state.
 - Hero scenario: revise an HVAC duct route after the human marks an electrical-riser constraint, simulate project impact, preserve human approval, and draft a change order.
 
 ## Technical Experience
