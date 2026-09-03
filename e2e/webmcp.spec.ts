@@ -101,6 +101,10 @@ test("completes the WebMCP hero journey without document reloads", async ({ page
   })
   expect(response.success).toBe(true)
   expect(response.data?.totalCostImpact).toBe(6500)
+  await expect(page.getByRole("heading", { name: "Change Ripple X-Ray" })).toBeVisible()
+  await expect(page.getByText("MEP-342 shifts")).toBeVisible()
+  await expect(page.getByText("+$6,500 net change")).toBeVisible()
+  await page.getByRole("button", { name: "Replay ripple" }).click()
   await expectToolNames(page, [
     "get_decision_context",
     "get_user_constraints",
@@ -112,6 +116,9 @@ test("completes the WebMCP hero journey without document reloads", async ({ page
   })
   expect(response.success).toBe(true)
   await expect(page.getByText("Ready for approval", { exact: true })).toBeVisible()
+  await expect(page.getByRole("heading", { name: "Decision Receipt" })).toBeVisible()
+  await expect(page.getByText("Awaiting human approval", { exact: true })).toBeVisible()
+  await expect(page.getByText("DEC-019 / OPTION-A.r2 / CONSTRAINT-12 / v6", { exact: true })).toBeVisible()
   await expectToolNames(page, ["get_decision_context", "get_user_constraints"])
 
   await page.getByRole("button", { name: "Approve decision" }).click()
@@ -127,6 +134,8 @@ test("completes the WebMCP hero journey without document reloads", async ({ page
   expect(response.success).toBe(true)
   await expect(page.getByText("CO-007").first()).toBeVisible()
   await expect(page.getByText("Change order drafted", { exact: true }).first()).toBeVisible()
+  await expect(page.getByText("Human approved", { exact: true })).toBeVisible()
+  await expect(page.getByText("CO-007 is a draft only; no contract was executed.", { exact: true })).toBeVisible()
   await expectToolNames(page, ["get_decision_context", "get_user_constraints"])
 
   expect(await page.evaluate(() => window.name)).toBe("changedecision-loads:1")

@@ -136,8 +136,63 @@
   }
 }
 
+@keyframes route-morph-draw {
+  from {
+    stroke-dasharray: 900;
+    stroke-dashoffset: 900;
+  }
+
+  to {
+    stroke-dasharray: 900;
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes ripple-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+    border-color: color-mix(in oklab, var(--primary) 55%, transparent);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.route-morph-after {
+  animation: route-morph-draw 1.15s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.ripple-step {
+  opacity: 0;
+  animation: ripple-arrive 480ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@media (min-width: 768px) {
+  .ripple-step:not(:last-child)::after {
+    position: absolute;
+    z-index: 2;
+    top: 2rem;
+    right: -0.55rem;
+    width: 0.55rem;
+    border-top: 1px dashed color-mix(in oklab, var(--primary) 45%, transparent);
+    content: "";
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+
+  .route-morph-after,
+  .ripple-step {
+    animation: none;
+  }
+
+  .ripple-step {
+    opacity: 1;
   }
 }

@@ -7,9 +7,11 @@ import { ActivityTimeline } from "./activity-timeline"
 import { ChangeOrderPanel } from "./change-order-panel"
 import { ConstraintControls } from "./constraint-controls"
 import { DecisionPanel } from "./decision-panel"
+import { DecisionReceiptPanel } from "./decision-receipt-panel"
 import { DecisionHeader } from "./decision-header"
 import { ErrorAlert } from "./error-alert"
 import { ImpactPanel } from "./impact-panel"
+import { ImpactRipplePanel } from "./impact-ripple-panel"
 import { OptionComparisonPanel } from "./option-comparison-panel"
 import { IssuePanel } from "./issue-panel"
 import { OptionsPanel } from "./options-panel"
@@ -67,6 +69,16 @@ export function DecisionRoomPage() {
               onCreateConstraint={handleConstraintSubmit}
             />
 
+            <ImpactRipplePanel
+              issue={room.activeIssue}
+              option={room.resolutionOptions.find(
+                (option) => option.id === room.impactSimulation?.optionId,
+              ) ?? null}
+              simulation={room.impactSimulation}
+              schedule={room.schedule}
+              contracts={room.contracts}
+            />
+
             <ConstraintControls
               disabled={!canAddConstraint}
               label={constraintLabel}
@@ -118,6 +130,15 @@ export function DecisionRoomPage() {
               decision={room.decision}
               canDraft={room.phase === "APPROVED"}
               onDraft={room.draftChangeOrder}
+            />
+            <DecisionReceiptPanel
+              decision={room.decision}
+              option={room.resolutionOptions.find(
+                (option) => option.id === room.decision?.optionId,
+              ) ?? null}
+              constraint={room.constraints[0] ?? null}
+              simulation={room.impactSimulation}
+              changeOrder={room.changeOrder}
             />
             <ActivityTimeline events={room.activityLog} />
           </div>

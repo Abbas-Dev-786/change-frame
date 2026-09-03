@@ -53,14 +53,29 @@ it("keeps approval human-only and renders the final draft change order", () => {
 
   expect(screen.getByText("Avoids CONSTRAINT-12")).toBeVisible()
   expect(screen.getByText("Balances constructability, cost, and milestone protection after the field constraint.")).toBeVisible()
+  expect(document.querySelector('[data-route-state="before"]')).not.toBeNull()
+  expect(document.querySelector('[data-route-state="after"]')).not.toBeNull()
+  expect(screen.getByText(/After · OPTION-A revision 2 clears constraint/)).toBeVisible()
 
   fireEvent.click(screen.getAllByRole("button", { name: /^Select$/i })[0])
   fireEvent.click(screen.getByRole("button", { name: /simulate impact/i }))
+
+  expect(screen.getByRole("heading", { name: "Change Ripple X-Ray" })).toBeVisible()
+  expect(screen.getByRole("button", { name: /replay ripple/i })).toBeEnabled()
+  expect(screen.getByText("MEP-342 shifts")).toBeVisible()
+  expect(screen.getByText("+$6,500 net change")).toBeVisible()
+  const versionBeforeReplay = useDecisionRoomStore.getState().stateVersion
+  fireEvent.click(screen.getByRole("button", { name: /replay ripple/i }))
+  expect(useDecisionRoomStore.getState().stateVersion).toBe(versionBeforeReplay)
+
   fireEvent.click(screen.getByRole("button", { name: /prepare decision/i }))
 
   expect(screen.getByText("Ready for approval")).toBeVisible()
   expect(screen.getByRole("button", { name: /approve decision/i })).toBeEnabled()
   expect(screen.getByText("DEC-019 is ready for human approval.")).toBeVisible()
+  expect(screen.getByRole("heading", { name: "Decision Receipt" })).toBeVisible()
+  expect(screen.getByText("Awaiting human approval")).toBeVisible()
+  expect(screen.getByText(/DEC-019 \/ OPTION-A\.r2 \/ CONSTRAINT-12 \/ v6/)).toBeVisible()
 
   fireEvent.click(screen.getByRole("button", { name: /approve decision/i }))
   fireEvent.click(screen.getByRole("button", { name: /draft change order/i }))
@@ -69,6 +84,19 @@ it("keeps approval human-only and renders the final draft change order", () => {
   expect(screen.getAllByText("CO-007")[0]).toBeVisible()
   expect(screen.getAllByText("+$6,500")[0]).toBeVisible()
   expect(screen.getByText("MEP-04 — Northline Mechanical")).toBeVisible()
+  expect(screen.getByText("Human approved")).toBeVisible()
+  expect(screen.getByText("CO-007 is a draft only; no contract was executed.")).toBeVisible()
+})
+
+it("uses strategy-aware language in the change ripple", () => {
+  render(<App />)
+
+  fireEvent.click(screen.getByRole("button", { name: /evaluate options/i }))
+  fireEvent.click(screen.getAllByRole("button", { name: /^Select$/i })[1])
+  fireEvent.click(screen.getByRole("button", { name: /simulate impact/i }))
+
+  expect(screen.getByText("OPTION-B r1 reshapes D22")).toBeVisible()
+  expect(screen.getByText("Uses the evaluated resized section on M-204.")).toBeVisible()
 })
 
 it("renders hostile constraint labels as text and keeps keyboard preview transient", () => {

@@ -3,6 +3,7 @@ import { useRef, useState, type PointerEvent } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   PLAN_VIEWBOX,
+  baseResolutionOptionsFixture,
   normalizeRect,
   routeToSvgPoints,
   type Constraint,
@@ -36,6 +37,10 @@ export function PlanBoard({
   const svgRef = useRef<SVGSVGElement | null>(null)
   const dragStartRef = useRef<Point | null>(null)
   const [draftRect, setDraftRect] = useState<Rect | null>(null)
+  const previewedOption = options.find((option) => option.id === previewOptionId)
+  const baselineRoute = previewedOption?.revision && previewedOption.revision > 1
+    ? baseResolutionOptionsFixture.find((option) => option.id === previewedOption.id)?.routeOverlay
+    : null
 
   function handlePointerDown(event: PointerEvent<SVGSVGElement>) {
     if (!canCreateConstraint || event.button !== 0) {
@@ -116,6 +121,9 @@ export function PlanBoard({
             <marker id="route-arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
               <path d="M0,0 L0,6 L8,3 z" fill="#b45309" />
             </marker>
+            <marker id="route-arrow-revised" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L8,3 z" fill="#15803d" />
+            </marker>
           </defs>
 
           <rect width={PLAN_VIEWBOX.width} height={PLAN_VIEWBOX.height} fill="url(#plan-grid)" />
@@ -138,21 +146,39 @@ export function PlanBoard({
           ))}
 
           <g id="resolution-overlays">
+            {baselineRoute ? (
+              <polyline
+                data-route-state="before"
+                points={routeToSvgPoints(baselineRoute)}
+                fill="none"
+                stroke="#dc2626"
+                strokeDasharray="10 8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="5"
+                opacity="0.45"
+              >
+                <title>Before revision: {baselineRoute.label}</title>
+              </polyline>
+            ) : null}
             {options.map((option) => {
               const isPreviewed = option.id === previewOptionId
+              const isRevisedPreview = isPreviewed && option.revision > 1
 
               return (
                 <polyline
                   key={option.routeOverlay.id}
+                  data-route-state={isRevisedPreview ? "after" : "candidate"}
                   points={routeToSvgPoints(option.routeOverlay)}
                   fill="none"
-                  stroke={isPreviewed ? "#b45309" : "#94a38c"}
+                  stroke={isRevisedPreview ? "#15803d" : isPreviewed ? "#b45309" : "#94a38c"}
                   strokeDasharray={option.revision > 1 ? "0" : "10 8"}
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth={isPreviewed ? 8 : 4}
                   opacity={isPreviewed ? 0.98 : 0.34}
-                  markerEnd={isPreviewed ? "url(#route-arrow)" : undefined}
+                  markerEnd={isPreviewed ? `url(#${isRevisedPreview ? "route-arrow-revised" : "route-arrow"})` : undefined}
+                  className={isRevisedPreview ? "route-morph-after" : undefined}
                 >
                   <title>{option.routeOverlay.label}</title>
                 </polyline>
@@ -178,6 +204,18 @@ export function PlanBoard({
             </text>
           </g>
         </svg>
+        {baselineRoute && previewedOption ? (
+          <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs" aria-label="Route comparison legend">
+            <span className="flex items-center gap-2 text-muted-foreground">
+              <span className="w-8 border-t-2 border-dashed border-red-600/70" aria-hidden="true" />
+              Before · field constraint conflict
+            </span>
+            <span className="flex items-center gap-2 font-medium text-emerald-800">
+              <span className="w-8 border-t-[3px] border-emerald-700" aria-hidden="true" />
+              After · {previewedOption.id} revision {previewedOption.revision} clears constraint
+            </span>
+          </div>
+        ) : null}
       </CardContent>
     </Card>
   )
