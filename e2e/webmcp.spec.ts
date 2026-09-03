@@ -26,12 +26,102 @@ const options = [
   { id: "ALT-DROP", strategy: "vertical-drop", title: "Drop below the barrier zone", description: "Use a vertical drop and low-level crossing.", rationale: "Reduces horizontal rerouting but adds access coordination.", assumptions: ["Low-level access remains maintainable"], confidence: 0.61, costImpact: 6200, scheduleImpactDays: 3, risk: "high", route: { label: "Low crossing", points: [{ x: 90, y: 410 }, { x: 680, y: 410 }] } },
 ]
 
+const starterDemoOptions = [
+  {
+    id: "ALT-EAST",
+    strategy: "corridor-reroute",
+    title: "Reroute through the east corridor bay",
+    description: "Offset duct D22 around beam B14 and reconnect beyond the electrical riser zone.",
+    rationale: "Preserves the structural beam and maintains the original duct section while using accessible corridor space.",
+    assumptions: ["The corridor ceiling has sufficient clear height", "Two additional elbows are acceptable to the mechanical engineer"],
+    confidence: 0.78,
+    costImpact: 4800,
+    scheduleImpactDays: 1,
+    risk: "medium",
+    route: { label: "Initial east corridor route", points: [{ x: 124, y: 250 }, { x: 340, y: 250 }, { x: 560, y: 250 }, { x: 682, y: 250 }] },
+  },
+  {
+    id: "ALT-HIGH",
+    strategy: "high-level-offset",
+    title: "Raise the duct above the conflict zone",
+    description: "Introduce a high-level offset before B14 and return to the original elevation downstream.",
+    rationale: "Avoids structural modification and keeps the route inside the mechanical coordination zone.",
+    assumptions: ["The upper plenum has verified clearance", "Hangers can connect without loading B14"],
+    confidence: 0.64,
+    costImpact: 5900,
+    scheduleImpactDays: 2,
+    risk: "medium",
+    route: { label: "High-level bypass", points: [{ x: 124, y: 250 }, { x: 320, y: 250 }, { x: 320, y: 130 }, { x: 682, y: 130 }] },
+  },
+  {
+    id: "ALT-SPLIT",
+    strategy: "parallel-branches",
+    title: "Split the supply run below B14",
+    description: "Divide the supply into two smaller branches through the south service zone and recombine downstream.",
+    rationale: "Reduces individual duct depth and avoids modifying structural or electrical elements.",
+    assumptions: ["Air balancing can maintain the design flow", "South service-zone access remains available"],
+    confidence: 0.7,
+    costImpact: 7200,
+    scheduleImpactDays: 2,
+    risk: "low",
+    route: { label: "South split route", points: [{ x: 124, y: 250 }, { x: 300, y: 250 }, { x: 300, y: 380 }, { x: 682, y: 380 }] },
+  },
+]
+
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
     const tools = new Map<string, TestTool>(); const loads = Number(window.name.replace("changeframe-loads:", "")) || 0; window.name = `changeframe-loads:${loads + 1}`
     Object.defineProperty(document, "modelContext", { configurable: true, value: { registerTool: async (tool: TestTool, options?: { signal?: AbortSignal }) => { tools.set(tool.name, tool); options?.signal?.addEventListener("abort", () => { if (tools.get(tool.name) === tool) tools.delete(tool.name) }, { once: true }) } } })
     window.webMcpTestHarness = { execute: async (name, input) => { const tool = tools.get(name); if (!tool) throw new Error(`Tool ${name} is not registered.`); return tool.execute(input, { signal: new AbortController().signal }) }, names: () => [...tools.keys()] }
   })
+})
+
+test("rehearses the complete starter-project demo video flow", async ({ page }) => {
+  await page.goto("/")
+  await expect(page.getByRole("heading", { name: "Starter project ready" })).toBeVisible()
+  await expect(page.getByText("0 agent proposals")).toBeVisible()
+
+  expect((await executeTool(page, "evaluate_resolution_options", { expectedStateVersion: 1, options: starterDemoOptions })).success).toBe(true)
+  await expect(page.getByText("ALT-EAST - Reroute through the east corridor bay")).toBeVisible()
+  await expect(page.getByText("78% confidence")).toBeVisible()
+
+  await page.getByLabel("Label").fill("Electrical riser access")
+  await page.getByRole("button", { name: "Create field constraint" }).click()
+  await expect(page.getByText("Needs revision")).toBeVisible()
+  await expectToolNames(page, ["get_decision_context", "get_user_constraints", "revise_resolution_option"])
+
+  const { id: _id, ...eastOption } = starterDemoOptions[0]
+  const revision = {
+    ...eastOption,
+    description: "Route D22 below the human-marked riser access region and reconnect downstream.",
+    rationale: "The south bypass preserves B14 and keeps the electrical-riser access rectangle unobstructed.",
+    assumptions: [...eastOption.assumptions, "The south service zone remains clear during installation"],
+    confidence: 0.82,
+    costImpact: 5300,
+    route: { label: "Validated south bypass", points: [{ x: 124, y: 250 }, { x: 340, y: 250 }, { x: 340, y: 380 }, { x: 682, y: 380 }] },
+  }
+  expect((await executeTool(page, "revise_resolution_option", { optionId: "ALT-EAST", constraintIds: ["CONSTRAINT-1"], expectedOptionRevision: 1, expectedStateVersion: 3, revision })).success).toBe(true)
+  await expect(page.getByText("Revised")).toBeVisible()
+  await expect(page.getByRole("cell", { name: "Avoids CONSTRAINT-1" })).toBeVisible()
+
+  await page.getByRole("button", { name: "Select", exact: true }).first().click()
+  const mitigation = { id: "MIT-PREFAB", type: "prefabrication", label: "Prefabricate duct offsets", rationale: "Off-site fabrication can recover the added field-installation day.", additionalCost: 1200, daysRecovered: 1, confidence: 0.74 }
+  expect((await executeTool(page, "simulate_project_impact", { expectedStateVersion: 5, mitigation })).success).toBe(true)
+  await expect(page.getByText("+$6,500 net change")).toBeVisible()
+  expect((await executeTool(page, "prepare_change_decision", { expectedStateVersion: 6 })).success).toBe(true)
+  await expect(page.getByText("Awaiting human approval")).toBeVisible()
+  await expectToolNames(page, ["get_decision_context", "get_user_constraints"])
+  expect(await page.evaluate(() => window.webMcpTestHarness.names().includes("approve_decision"))).toBe(false)
+
+  await page.getByRole("button", { name: "Approve decision" }).click()
+  await expectToolNames(page, ["get_decision_context", "get_user_constraints", "draft_change_order"])
+  expect((await executeTool(page, "draft_change_order", { expectedStateVersion: 8 })).success).toBe(true)
+  await expect(page.getByText("CO-ISS-019").first()).toBeVisible()
+  await expect(page.getByText("Human approved")).toBeVisible()
+
+  await page.getByRole("button", { name: "Open Agent Flight Recorder" }).click()
+  await expect(page.getByText("Live capability choreography and actor-attributed state trace.")).toBeVisible()
+  await expect(page.getByText("approve_decision").last()).toBeVisible()
 })
 
 test("solves a runtime-supplied decision with agent-authored alternatives", async ({ page }) => {
