@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react"
+import { fireEvent, render, screen, within } from "@testing-library/react"
 import { afterEach, expect, it } from "vitest"
 
 import { App } from "./App"
@@ -34,9 +34,12 @@ it("materializes options and creates a keyboard coordinate constraint", () => {
   render(<App />)
 
   fireEvent.click(screen.getByRole("button", { name: /evaluate options/i }))
+  fireEvent.click(screen.getByRole("button", { name: "Open Agent Flight Recorder" }))
 
-  expect(screen.getByText("evaluate_options")).toBeVisible()
-  expect(screen.getByText("human", { exact: true })).toBeVisible()
+  const flightTrace = screen.getByRole("region", { name: "Latest trace" })
+  expect(within(flightTrace).getByText("evaluate_options")).toBeVisible()
+  expect(within(flightTrace).getByText("human", { exact: true })).toBeVisible()
+  fireEvent.click(screen.getByRole("button", { name: "Close flight recorder" }))
   fireEvent.change(screen.getByLabelText("Rejection reason for OPTION-B"), {
     target: { value: "requires_engineering_review" },
   })

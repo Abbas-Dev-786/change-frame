@@ -73,14 +73,18 @@ test("completes the WebMCP hero journey without document reloads", async ({ page
   })
   expect(response.success).toBe(true)
   await expect(page.getByText("Options available", { exact: true })).toBeVisible()
+  await page.getByRole("button", { name: "Open Agent Flight Recorder" }).click()
   const flightTrace = page.getByRole("region", { name: "Latest trace" })
   await expect(flightTrace.getByText("evaluate_resolution_options", { exact: true })).toBeVisible()
   await expect(flightTrace.getByText("v1 → v2", { exact: true })).toBeVisible()
+  await page.getByRole("button", { name: "Close flight recorder" }).click()
   await expectToolNames(page, ["get_decision_context", "get_user_constraints"])
 
   await page.getByRole("button", { name: "Create field constraint" }).click()
+  await page.getByRole("button", { name: "Open Agent Flight Recorder" }).click()
   await expect(flightTrace.getByText("upsert_constraint", { exact: true })).toBeVisible()
   await expect(flightTrace.getByText("human", { exact: true })).toBeVisible()
+  await page.getByRole("button", { name: "Close flight recorder" }).click()
   await expectToolNames(page, [
     "get_decision_context",
     "get_user_constraints",
@@ -131,9 +135,11 @@ test("completes the WebMCP hero journey without document reloads", async ({ page
   await expectToolNames(page, ["get_decision_context", "get_user_constraints"])
 
   await page.getByRole("button", { name: "Approve decision" }).click()
+  await page.getByRole("button", { name: "Open Agent Flight Recorder" }).click()
   await expect(flightTrace.getByText("approve_decision", { exact: true })).toBeVisible()
   await page.getByRole("button", { name: "Replay trace" }).click()
   await expect(page.getByText("v8", { exact: true })).toBeVisible()
+  await page.getByRole("button", { name: "Close flight recorder" }).click()
   await expectToolNames(page, [
     "get_decision_context",
     "get_user_constraints",
