@@ -53,7 +53,9 @@ export function DecisionHeader({
             </span>
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
-            {contextConfigured ? `${projectName} · ${contextSource === "starter" ? "Replaceable starter project" : "Live Decision Room"}` : "Open-ended agent workspace"}
+            {contextConfigured
+              ? `${projectName} · ${contextSource === "starter" ? "Replaceable starter project" : "Live Decision Room"}`
+              : "Open-ended agent workspace"}
           </p>
         </div>
 
@@ -67,10 +69,10 @@ export function DecisionHeader({
             <RotateCcw aria-hidden="true" />
             Reset workflow
           </Button>
-          <Badge variant="outline" className="gap-1.5 rounded-lg border-violet-300 bg-violet-50 px-3 py-2 text-violet-800">
+          {/* <Badge variant="outline" className="gap-1.5 rounded-lg border-violet-300 bg-violet-50 px-3 py-2 text-violet-800">
             <Bot aria-hidden="true" className="size-4" />
             Agent-authored options
-          </Badge>
+          </Badge> */}
         </div>
       </CardContent>
     </Card>

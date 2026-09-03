@@ -107,7 +107,7 @@ The repository contains a complete root-level MIT `LICENSE` file so GitHub can d
 
 TODO: Add the public YouTube URL for a narrated video under three minutes.
 
-The complete timed narration, prompts, screen actions, editing notes, recovery lines, and rehearsal checklist are in `docs/DEMO_VIDEO_SCRIPT.md`.
+The focused 1:45–1:55 narration, WebMCP prompts, screen actions, editing notes, and rehearsal checklist are in `docs/DEMO_VIDEO_SCRIPT.md`.
 
 ## Screenshot Shot List
 
