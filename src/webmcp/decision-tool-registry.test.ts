@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from "vitest"
 import { createInitialDecisionState, DEFAULT_CONSTRAINT_RECT } from "@/src/domain/decision"
 import { useDecisionRoomStore } from "@/src/store/decision-room-store"
 import type { WebMcpToolDescriptor } from "./model-context"
+import { resetFlightRecorderForTests } from "@/src/observability/agent-flight-recorder"
 import {
   getDecisionToolRegistryStatus,
   resetDecisionToolRegistryForTests,
@@ -20,6 +21,7 @@ const registeredTools = new Map<string, RegisteredTool>()
 
 afterEach(() => {
   resetDecisionToolRegistryForTests()
+  resetFlightRecorderForTests()
   window.sessionStorage.clear()
   registeredTools.clear()
   useDecisionRoomStore.setState(createInitialDecisionState())

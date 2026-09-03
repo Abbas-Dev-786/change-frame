@@ -1,4 +1,5 @@
 import { useDecisionRoomStore } from "@/src/store/decision-room-store"
+import { recordCapabilityReconciliation } from "@/src/observability/agent-flight-recorder"
 import { decisionTools, type DecisionToolName } from "./decision-tools"
 import { getModelContext } from "./model-context"
 import {
@@ -165,7 +166,15 @@ function updateRegistryStatus(nextStatus: RegistryStatus): void {
     return
   }
 
+  const previousStatus = registryState
   registryState = nextStatus
+  recordCapabilityReconciliation({
+    available: nextStatus.available,
+    registeredTools: nextStatus.registeredTools,
+    previousTools: previousStatus.registeredTools,
+    stateVersion: useDecisionRoomStore.getState().stateVersion,
+    error: nextStatus.error,
+  })
 
   for (const subscriber of subscribers) {
     subscriber()

@@ -1,6 +1,11 @@
 import { create } from "zustand"
 
 import {
+  recordHumanDecisionAction,
+  recordHumanWorkflowReset,
+} from "@/src/observability/agent-flight-recorder"
+
+import {
   createInitialDecisionState,
   approveDecisionByHuman,
   draftChangeOrder,
@@ -50,12 +55,13 @@ export const useDecisionRoomStore = create<DecisionRoomStore>((set, get) => ({
       expectedStateVersion: currentState.stateVersion,
     })
 
-    commitDecisionRoomState(set, result.state)
+    commitHumanResult(set, "evaluate_options", "Generated the supported resolution options.", currentState, result)
   },
   upsertConstraint: (draft) => {
-    const result = upsertHumanConstraint(readCurrentState(get()), draft)
+    const currentState = readCurrentState(get())
+    const result = upsertHumanConstraint(currentState, draft)
 
-    commitDecisionRoomState(set, result.state)
+    commitHumanResult(set, "upsert_constraint", "Added the field constraint to the shared plan.", currentState, result)
   },
   reviseOption: (optionId) => {
     const currentState = readCurrentState(get())
@@ -71,20 +77,22 @@ export const useDecisionRoomStore = create<DecisionRoomStore>((set, get) => ({
       expectedStateVersion: currentState.stateVersion,
     })
 
-    commitDecisionRoomState(set, result.state)
+    commitHumanResult(set, "revise_option", `Revised ${optionId} from the human interface.`, currentState, result)
   },
   rejectOption: (optionId, reason) => {
-    const result = rejectResolutionOption(readCurrentState(get()), {
+    const currentState = readCurrentState(get())
+    const result = rejectResolutionOption(currentState, {
       optionId,
       reason,
     })
 
-    commitDecisionRoomState(set, result.state)
+    commitHumanResult(set, "reject_option", `Rejected ${optionId}.`, currentState, result)
   },
   selectOption: (optionId) => {
-    const result = selectResolutionOption(readCurrentState(get()), optionId)
+    const currentState = readCurrentState(get())
+    const result = selectResolutionOption(currentState, optionId)
 
-    commitDecisionRoomState(set, result.state)
+    commitHumanResult(set, "select_option", `Selected ${optionId} as the human reviewer.`, currentState, result)
   },
   simulateImpact: (preserveInspectionMilestone) => {
     const currentState = readCurrentState(get())
@@ -93,7 +101,7 @@ export const useDecisionRoomStore = create<DecisionRoomStore>((set, get) => ({
       expectedStateVersion: currentState.stateVersion,
     })
 
-    commitDecisionRoomState(set, result.state)
+    commitHumanResult(set, "simulate_impact", "Ran project impact simulation from the human interface.", currentState, result)
   },
   prepareDecision: () => {
     const currentState = readCurrentState(get())
@@ -101,12 +109,13 @@ export const useDecisionRoomStore = create<DecisionRoomStore>((set, get) => ({
       expectedStateVersion: currentState.stateVersion,
     })
 
-    commitDecisionRoomState(set, result.state)
+    commitHumanResult(set, "prepare_decision", "Prepared the decision from the human interface.", currentState, result)
   },
   approveDecision: () => {
-    const result = approveDecisionByHuman(readCurrentState(get()))
+    const currentState = readCurrentState(get())
+    const result = approveDecisionByHuman(currentState)
 
-    commitDecisionRoomState(set, result.state)
+    commitHumanResult(set, "approve_decision", "Approved DEC-019 at the protected human checkpoint.", currentState, result)
   },
   draftChangeOrder: () => {
     const currentState = readCurrentState(get())
@@ -114,21 +123,21 @@ export const useDecisionRoomStore = create<DecisionRoomStore>((set, get) => ({
       expectedStateVersion: currentState.stateVersion,
     })
 
-    commitDecisionRoomState(set, result.state)
+    commitHumanResult(set, "draft_change_order", "Drafted CO-007 from the human interface.", currentState, result)
   },
   previewOption: (optionId) => {
     const nextState = setPreviewOption(readCurrentState(get()), optionId)
     set({ previewOptionId: nextState.previewOptionId })
   },
   resetWorkflow: () => {
+    const currentState = readCurrentState(get())
     clearSavedState()
-    commitDecisionRoomState(
-      set,
-      resetDecisionRoom(
-        readCurrentState(get()),
-        () => createInitialDecisionState(new Date().toISOString()),
-      ),
+    const nextState = resetDecisionRoom(
+      currentState,
+      () => createInitialDecisionState(new Date().toISOString()),
     )
+    commitDecisionRoomState(set, nextState)
+    recordHumanWorkflowReset(currentState.stateVersion, nextState.stateVersion)
   },
 }))
 
@@ -206,6 +215,17 @@ function commitDecisionRoomState(
 ): void {
   writeSavedState(state)
   set(state)
+}
+
+function commitHumanResult(
+  set: (state: Partial<DecisionRoomStore>) => void,
+  action: string,
+  label: string,
+  currentState: DecisionRoomState,
+  result: DomainResult,
+): void {
+  commitDecisionRoomState(set, result.state)
+  recordHumanDecisionAction(action, label, currentState.stateVersion, result)
 }
 
 function loadSavedState(): DecisionRoomState {

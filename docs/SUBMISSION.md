@@ -28,12 +28,13 @@ Suggested 90-second narration:
 2. Ask the agent to inspect context and evaluate three resolution options.
 3. Create the human blocked-region constraint `CONSTRAINT-12`.
 4. Ask the agent to revise the affected option and show the route avoiding the constraint.
-5. Select revised `OPTION-A` as the human project manager.
-6. Ask the agent to simulate cost and schedule impact while preserving inspection.
-7. Ask the agent to prepare the decision, then point out that approval is human-only.
-8. Click `Approve decision`.
-9. Ask the agent to draft the change order and show `CO-007`.
-10. Close by emphasizing dynamic tool availability, shared UI state, and no agent approval/execution authority.
+5. Point out the Flight Recorder: the previous tool is marked used, the next valid capability activates, and the state-version transition is visible.
+6. Select revised `OPTION-A` as the human project manager.
+7. Ask the agent to simulate cost and schedule impact while preserving inspection.
+8. Ask the agent to prepare the decision, then point out that approval is human-only.
+9. Click `Approve decision`.
+10. Ask the agent to draft the change order and show `CO-007`.
+11. Close by emphasizing dynamic tool availability, shared UI state, and no agent approval/execution authority.
 
 ## Devpost project description draft
 

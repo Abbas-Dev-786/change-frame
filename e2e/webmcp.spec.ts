@@ -64,15 +64,23 @@ test("completes the WebMCP hero journey without document reloads", async ({ page
     "get_user_constraints",
     "evaluate_resolution_options",
   ])
+  await expect(page.getByRole("heading", { name: "Agent Flight Recorder" })).toBeVisible()
+  await expect(page.getByText("3 of 7 tools live", { exact: true })).toBeVisible()
+  await expect(page.getByLabel("Human authority: protected")).toBeVisible()
 
   let response = await executeTool(page, "evaluate_resolution_options", {
     expectedStateVersion: 1,
   })
   expect(response.success).toBe(true)
   await expect(page.getByText("Options available", { exact: true })).toBeVisible()
+  const flightTrace = page.getByRole("region", { name: "Latest trace" })
+  await expect(flightTrace.getByText("evaluate_resolution_options", { exact: true })).toBeVisible()
+  await expect(flightTrace.getByText("v1 → v2", { exact: true })).toBeVisible()
   await expectToolNames(page, ["get_decision_context", "get_user_constraints"])
 
   await page.getByRole("button", { name: "Create field constraint" }).click()
+  await expect(flightTrace.getByText("upsert_constraint", { exact: true })).toBeVisible()
+  await expect(flightTrace.getByText("human", { exact: true })).toBeVisible()
   await expectToolNames(page, [
     "get_decision_context",
     "get_user_constraints",
@@ -119,9 +127,13 @@ test("completes the WebMCP hero journey without document reloads", async ({ page
   await expect(page.getByRole("heading", { name: "Decision Receipt" })).toBeVisible()
   await expect(page.getByText("Awaiting human approval", { exact: true })).toBeVisible()
   await expect(page.getByText("DEC-019 / OPTION-A.r2 / CONSTRAINT-12 / v6", { exact: true })).toBeVisible()
+  await expect(page.getByRole("link", { name: /Flight provenance/i })).toHaveAttribute("href", "#agent-flight-recorder")
   await expectToolNames(page, ["get_decision_context", "get_user_constraints"])
 
   await page.getByRole("button", { name: "Approve decision" }).click()
+  await expect(flightTrace.getByText("approve_decision", { exact: true })).toBeVisible()
+  await page.getByRole("button", { name: "Replay trace" }).click()
+  await expect(page.getByText("v8", { exact: true })).toBeVisible()
   await expectToolNames(page, [
     "get_decision_context",
     "get_user_constraints",

@@ -11,6 +11,7 @@ import {
   type ProjectImpactSimulation,
   type ResolutionOption,
 } from "@/src/domain/decision"
+import { useAgentFlightRecorder } from "../hooks/use-agent-flight-recorder"
 
 type DecisionReceiptPanelProps = {
   decision: Decision | null
@@ -27,6 +28,8 @@ export function DecisionReceiptPanel({
   simulation,
   changeOrder,
 }: DecisionReceiptPanelProps) {
+  const recorder = useAgentFlightRecorder()
+
   if (!decision || !option || !simulation) {
     return null
   }
@@ -38,6 +41,8 @@ export function DecisionReceiptPanel({
     `v${decision.sourceStateVersion}`,
   ].join(" / ")
   const isApproved = decision.status === "APPROVED"
+  const agentEvents = recorder.events.filter((event) => event.actor === "agent")
+  const latestAgentEvent = agentEvents.at(-1)
 
   return (
     <Card className="rounded-lg border-primary/25 bg-card py-4 shadow-sm">
@@ -61,6 +66,12 @@ export function DecisionReceiptPanel({
             Reproducible state trace
           </p>
           <code className="mt-1 block break-words text-xs font-semibold text-primary">{trace}</code>
+          <a
+            href="#agent-flight-recorder"
+            className="mt-2 inline-flex items-center gap-1 text-[10px] font-medium text-muted-foreground underline decoration-border underline-offset-4 hover:text-foreground"
+          >
+            Flight provenance · {agentEvents.length} agent calls · {latestAgentEvent?.id ?? "human-only session"}
+          </a>
 
           <dl className="mt-4 grid gap-2 sm:grid-cols-2">
             <ReceiptFact label="Geometry input" value={constraint ? `${constraint.id}: ${constraint.label}` : "No field constraint"} />

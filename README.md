@@ -12,6 +12,7 @@ The current build implements the full local MVP through Phase 12 readiness:
 - spec-compliant, AbortSignal-owned dynamic tool registration by decision phase without reloads
 - explicit human-only approval before `draft_change_order` becomes available
 - final draft change-order artifact `CO-007`
+- live Agent Flight Recorder with dynamic capability states, actor attribution, redacted WebMCP spans, and state-version provenance
 - local eval plan, submission checklist, and open-source license
 
 The interface uses Tailwind CSS and shared shadcn/ui primitives. Product code follows a feature-oriented modular architecture documented in [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md); explicit `any` types are prohibited by a repository quality gate.

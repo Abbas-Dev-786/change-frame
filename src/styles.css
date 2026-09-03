@@ -161,6 +161,28 @@
   }
 }
 
+@keyframes flight-node-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes flight-status-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, #16a34a 30%, transparent);
+  }
+
+  50% {
+    box-shadow: 0 0 0 5px transparent;
+  }
+}
+
 .route-morph-after {
   animation: route-morph-draw 1.15s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
@@ -168,6 +190,16 @@
 .ripple-step {
   opacity: 0;
   animation: ripple-arrive 480ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.flight-capability-node,
+.flight-trace-row {
+  opacity: 0;
+  animation: flight-node-arrive 360ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.flight-recorder-pulse {
+  animation: flight-status-pulse 1.8s ease-out infinite;
 }
 
 @media (min-width: 768px) {
@@ -188,11 +220,16 @@
   }
 
   .route-morph-after,
-  .ripple-step {
+  .ripple-step,
+  .flight-capability-node,
+  .flight-trace-row,
+  .flight-recorder-pulse {
     animation: none;
   }
 
-  .ripple-step {
+  .ripple-step,
+  .flight-capability-node,
+  .flight-trace-row {
     opacity: 1;
   }
 }

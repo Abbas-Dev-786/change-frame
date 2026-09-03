@@ -87,7 +87,14 @@ export function DecisionRoomPage() {
               onLabelChange={setConstraintLabel}
               onSubmit={handleConstraintSubmit}
             />
-            <WebMcpStatusPanel status={webmcpStatus} />
+            <WebMcpStatusPanel
+              status={webmcpStatus}
+              phase={room.phase}
+              stateVersion={room.stateVersion}
+              hasConstraint={room.constraints.length > 0}
+              hasSelection={room.selectedOptionId !== null}
+              isApproved={room.decision?.status === "APPROVED"}
+            />
           </div>
 
           <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-1">

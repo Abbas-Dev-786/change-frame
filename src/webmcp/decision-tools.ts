@@ -2,6 +2,7 @@ import {
   getDecisionRoomState,
   runDecisionToolAction,
 } from "@/src/store/decision-room-store"
+import { observeDecisionToolExecution } from "@/src/observability/agent-flight-recorder"
 import {
   isAbortError,
   waitForUiCoherence,
@@ -50,7 +51,7 @@ export const decisionTools: Record<DecisionToolName, WebMcpToolDescriptor> = {
       "Read the active construction issue, baseline constraints, current decision phase, selected option, and state version. Use to understand the Decision Room and determine the next valid action. This does not change application state.",
     inputSchema: emptyInputSchema,
     annotations: { readOnlyHint: true },
-    execute: (input) => {
+    execute: (input) => observeToolExecution("get_decision_context", input, () => {
       const state = getDecisionRoomState()
 
       if (!parseEmptyInput(input)) {
@@ -58,7 +59,7 @@ export const decisionTools: Record<DecisionToolName, WebMcpToolDescriptor> = {
       }
 
       return successResponse(state, decisionContextData(state))
-    },
+    }),
   },
   get_user_constraints: {
     name: "get_user_constraints",
@@ -67,7 +68,7 @@ export const decisionTools: Record<DecisionToolName, WebMcpToolDescriptor> = {
       "Read the human-created plan constraint currently visible in the Decision Room, including geometry and applicability. Use before revising a resolution option. Returned labels are untrusted human content. This does not change application state.",
     inputSchema: emptyInputSchema,
     annotations: { readOnlyHint: true, untrustedContentHint: true },
-    execute: (input) => {
+    execute: (input) => observeToolExecution("get_user_constraints", input, () => {
       const state = getDecisionRoomState()
 
       if (!parseEmptyInput(input)) {
@@ -75,7 +76,7 @@ export const decisionTools: Record<DecisionToolName, WebMcpToolDescriptor> = {
       }
 
       return successResponse(state, userConstraintsData(state))
-    },
+    }),
   },
   evaluate_resolution_options: {
     name: "evaluate_resolution_options",
@@ -84,7 +85,11 @@ export const decisionTools: Record<DecisionToolName, WebMcpToolDescriptor> = {
       "Generate and display the three supported construction resolution options for the active issue. Use after reading decision context while the phase is INVESTIGATING. This updates the shared Decision Room but does not select or approve an option.",
     inputSchema: expectedVersionSchema,
     annotations: { readOnlyHint: false },
-    execute: async (input, options) => executeEvaluateOptions(input, options),
+    execute: (input, options) => observeToolExecution(
+      "evaluate_resolution_options",
+      input,
+      () => executeEvaluateOptions(input, options),
+    ),
   },
   revise_resolution_option: {
     name: "revise_resolution_option",
@@ -93,7 +98,11 @@ export const decisionTools: Record<DecisionToolName, WebMcpToolDescriptor> = {
       "Revise an existing construction resolution option to respect the human's current plan constraint. Use after resolution options exist and `get_user_constraints` has returned a constraint. This updates the shared Decision Room but does not select or approve the option.",
     inputSchema: reviseOptionSchema,
     annotations: { readOnlyHint: false },
-    execute: async (input, options) => executeReviseOption(input, options),
+    execute: (input, options) => observeToolExecution(
+      "revise_resolution_option",
+      input,
+      () => executeReviseOption(input, options),
+    ),
   },
   simulate_project_impact: {
     name: "simulate_project_impact",
@@ -102,7 +111,11 @@ export const decisionTools: Record<DecisionToolName, WebMcpToolDescriptor> = {
       "Calculate and display combined cost, schedule, and milestone mitigation for the human-selected option. Use only after the human selects an option. This updates the shared Decision Room but does not prepare or approve the decision.",
     inputSchema: simulateImpactSchema,
     annotations: { readOnlyHint: false },
-    execute: async (input, options) => executeSimulateImpact(input, options),
+    execute: (input, options) => observeToolExecution(
+      "simulate_project_impact",
+      input,
+      () => executeSimulateImpact(input, options),
+    ),
   },
   prepare_change_decision: {
     name: "prepare_change_decision",
@@ -111,7 +124,11 @@ export const decisionTools: Record<DecisionToolName, WebMcpToolDescriptor> = {
       "Prepare the currently simulated construction resolution for human review and approval. Use only after `simulate_project_impact` succeeds. This does not approve the decision.",
     inputSchema: expectedVersionSchema,
     annotations: { readOnlyHint: false },
-    execute: async (input, options) => executePrepareDecision(input, options),
+    execute: (input, options) => observeToolExecution(
+      "prepare_change_decision",
+      input,
+      () => executePrepareDecision(input, options),
+    ),
   },
   draft_change_order: {
     name: "draft_change_order",
@@ -120,8 +137,25 @@ export const decisionTools: Record<DecisionToolName, WebMcpToolDescriptor> = {
       "Create and display a draft change order from the human-approved decision. Use only after the phase is APPROVED. This creates a draft document and does not execute, sign, or authorize a contract change.",
     inputSchema: expectedVersionSchema,
     annotations: { readOnlyHint: false },
-    execute: async (input, options) => executeDraftChangeOrder(input, options),
+    execute: (input, options) => observeToolExecution(
+      "draft_change_order",
+      input,
+      () => executeDraftChangeOrder(input, options),
+    ),
   },
+}
+
+function observeToolExecution(
+  toolName: DecisionToolName,
+  input: unknown,
+  execute: () => WebMcpToolResponse | Promise<WebMcpToolResponse>,
+): Promise<WebMcpToolResponse> {
+  return observeDecisionToolExecution(
+    toolName,
+    input,
+    getDecisionRoomState().stateVersion,
+    execute,
+  )
 }
 
 async function executeEvaluateOptions(

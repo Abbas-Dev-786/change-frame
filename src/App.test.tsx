@@ -5,9 +5,11 @@ import { App } from "./App"
 import { useDecisionRoomStore } from "./store/decision-room-store"
 import { createInitialDecisionState } from "./domain/decision"
 import { resetDecisionToolRegistryForTests } from "./webmcp/decision-tool-registry"
+import { resetFlightRecorderForTests } from "./observability/agent-flight-recorder"
 
 afterEach(() => {
   resetDecisionToolRegistryForTests()
+  resetFlightRecorderForTests()
   window.sessionStorage.clear()
   useDecisionRoomStore.setState(createInitialDecisionState())
   Object.defineProperty(document, "modelContext", {
@@ -23,12 +25,18 @@ it("loads the decision room in the canonical investigating state", () => {
   expect(screen.getByText("ISS-019")).toBeVisible()
   expect(screen.getByText("HVAC duct conflicts with structural beam B14")).toBeVisible()
   expect(screen.getByText("Investigating")).toBeVisible()
+  expect(screen.getByRole("heading", { name: "Agent Flight Recorder" })).toBeVisible()
+  expect(screen.getByText("0 of 7 tools live")).toBeVisible()
+  expect(screen.getByText("approve_decision")).toBeVisible()
 })
 
 it("materializes options and creates a keyboard coordinate constraint", () => {
   render(<App />)
 
   fireEvent.click(screen.getByRole("button", { name: /evaluate options/i }))
+
+  expect(screen.getByText("evaluate_options")).toBeVisible()
+  expect(screen.getByText("human", { exact: true })).toBeVisible()
   fireEvent.change(screen.getByLabelText("Rejection reason for OPTION-B"), {
     target: { value: "requires_engineering_review" },
   })
@@ -76,6 +84,7 @@ it("keeps approval human-only and renders the final draft change order", () => {
   expect(screen.getByRole("heading", { name: "Decision Receipt" })).toBeVisible()
   expect(screen.getByText("Awaiting human approval")).toBeVisible()
   expect(screen.getByText(/DEC-019 \/ OPTION-A\.r2 \/ CONSTRAINT-12 \/ v6/)).toBeVisible()
+  expect(screen.getByRole("link", { name: /Flight provenance/i })).toHaveAttribute("href", "#agent-flight-recorder")
 
   fireEvent.click(screen.getByRole("button", { name: /approve decision/i }))
   fireEvent.click(screen.getByRole("button", { name: /draft change order/i }))

@@ -30,6 +30,7 @@ The following future-scope items have been intentionally pulled into the working
 |---|---|---|
 | Dedicated option comparison view | Read-only UI comparison panel for cost, schedule, risk, constraint status, and decision notes | No new WebMCP tool; selection and approval remain human-controlled. |
 | Option rejection reasons | Human-only option rejection control with structured reasons, activity logging, and comparison-panel visibility | No new WebMCP tool; rejected options cannot be selected and approval remains human-controlled. |
+| Agent Flight Recorder | Read-only capability constellation and session trace for human, agent, and registry actions | No new WebMCP tool; inputs are redacted and telemetry cannot affect workflow state or authorization. |
 
 ---
 
